@@ -12,7 +12,7 @@ import IconButton from '../components/IconButton';
 import Spotlight from '../components/Spotlight';
 import TierRow from '../components/TierRow';
 import BroadcastLowerThird from '../components/presentation/BroadcastLowerThird';
-import EliteFinaleCelebration from '../components/presentation/EliteFinaleCelebration';
+import FinaleCarousel from '../components/presentation/FinaleCarousel';
 import FinaleOverlay from '../components/presentation/FinaleOverlay';
 import PresentationQueue from '../components/presentation/PresentationQueue';
 import SoundToggle from '../components/presentation/SoundToggle';
@@ -28,7 +28,6 @@ import {
 	getDisappointmentTone,
 	getLowerThirdLabel,
 	getTierRank,
-	isEliteTier,
 	QUEUE,
 } from '../presentationConfig';
 import { useSetupStore } from '../store/setupStore';
@@ -73,14 +72,10 @@ export default function PresentationView({
 		tone: ReturnType<typeof getDisappointmentTone>;
 	} | null>(null);
 	const [showFinale, setShowFinale] = useState(false);
-	const [eliteFinaleActive, setEliteFinaleActive] = useState(false);
+	const [finaleCarouselActive, setFinaleCarouselActive] = useState(false);
 
-	const hasEliteSlides = useMemo(
-		() =>
-			rows.some(
-				(row, index) =>
-					isEliteTier(index, rows.length) && row.images.length > 0,
-			),
+	const hasFinaleSlides = useMemo(
+		() => rows.some((row) => row.images.length > 0),
 		[rows],
 	);
 
@@ -172,14 +167,13 @@ export default function PresentationView({
 
 	const handleFinaleContinue = useCallback(() => {
 		setShowFinale(false);
-		if (hasEliteSlides) {
-			void resumeAudioContext();
-			setEliteFinaleActive(true);
+		if (hasFinaleSlides) {
+			setFinaleCarouselActive(true);
 		}
-	}, [hasEliteSlides]);
+	}, [hasFinaleSlides]);
 
-	const handleEliteFinaleComplete = useCallback(() => {
-		setEliteFinaleActive(false);
+	const handleFinaleCarouselComplete = useCallback(() => {
+		setFinaleCarouselActive(false);
 	}, []);
 
 	const spotlightImage =
@@ -350,10 +344,11 @@ export default function PresentationView({
 
 			<div className="present-exit-zone">
 				<div className="present-exit present-exit--controls">
-					<SoundToggle />
+					<SoundToggle iconOnly />
 					<IconButton
 						icon={ArrowLeft}
 						label="Back to setup"
+						iconOnly
 						onClick={onExitSetup}
 					/>
 				</div>
@@ -432,10 +427,10 @@ export default function PresentationView({
 				onAssignTier={handleAssignTier}
 			/>
 
-			<EliteFinaleCelebration
-				active={eliteFinaleActive}
+			<FinaleCarousel
+				active={finaleCarouselActive}
 				rows={rows}
-				onComplete={handleEliteFinaleComplete}
+				onComplete={handleFinaleCarouselComplete}
 			/>
 
 			<FinaleOverlay

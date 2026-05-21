@@ -33,8 +33,8 @@ describe('cataas integration', () => {
 		const images = await pickCataasImages(3);
 		expect(images).toHaveLength(3);
 		expect(new Set(images).size).toBe(3);
-		expect(images.every((url) => url.startsWith('https://cataas.com/cat/'))).toBe(
-			true,
-		);
+		expect(
+			images.every((url) => url.startsWith('https://cataas.com/cat/')),
+		).toBe(true);
 	});
 });

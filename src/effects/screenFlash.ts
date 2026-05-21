@@ -13,6 +13,11 @@ let shakeGeneration = 0;
 let shakeTimer: number | null = null;
 let shakeIntensity: 'light' | 'normal' | 'heavy' | null = null;
 
+/** Shake #root so fixed portals on body (spotlight, overlays) stay anchored on iOS. */
+function getShakeTarget(): HTMLElement {
+	return document.getElementById('root') ?? document.body;
+}
+
 function getWashEl(): HTMLDivElement {
 	if (!washEl) {
 		washEl = document.createElement('div');
@@ -129,10 +134,11 @@ export function shakeScreen(
 	if (prefersReducedMotion()) {
 		return;
 	}
+	const target = getShakeTarget();
 	if (shakeIntensity != null) {
-		document.body.classList.remove(`screen-shake--${shakeIntensity}`);
+		target.classList.remove(`screen-shake--${shakeIntensity}`);
 	}
-	document.body.classList.add(`screen-shake--${intensity}`);
+	target.classList.add(`screen-shake--${intensity}`);
 	shakeIntensity = intensity;
 	const ms = intensity === 'heavy' ? 580 : intensity === 'light' ? 320 : 480;
 	if (shakeTimer != null) {
@@ -145,7 +151,7 @@ export function shakeScreen(
 			return;
 		}
 		if (shakeIntensity != null) {
-			document.body.classList.remove(`screen-shake--${shakeIntensity}`);
+			getShakeTarget().classList.remove(`screen-shake--${shakeIntensity}`);
 			shakeIntensity = null;
 		}
 		shakeTimer = null;

@@ -17,10 +17,12 @@ const SOURCE_OPTIONS: {
 	icon: typeof TrainFront;
 }[] = [
 	{ id: 'tpaas', label: 'Trolley problems', icon: TrainFront },
-	{ id: 'cataas', label: 'Cats', icon: Cat },
+	{ id: 'cataas', label: 'CATaaS', icon: Cat },
 ];
 
-export default function InspirationPanel({ onStartDemo }: InspirationPanelProps) {
+export default function InspirationPanel({
+	onStartDemo,
+}: InspirationPanelProps) {
 	const panelId = useId();
 	const [expanded, setExpanded] = useState(false);
 	const [source, setSource] = useState<InspirationSource>('tpaas');
@@ -28,7 +30,9 @@ export default function InspirationPanel({ onStartDemo }: InspirationPanelProps)
 	const [loading, setLoading] = useState(false);
 
 	const config = INSPIRATION_SOURCES[source];
-	const SourceIcon = SOURCE_OPTIONS.find((option) => option.id === source)?.icon;
+	const SourceIcon = SOURCE_OPTIONS.find(
+		(option) => option.id === source,
+	)?.icon;
 
 	const handleStart = () => {
 		void (async () => {
@@ -89,7 +93,11 @@ export default function InspirationPanel({ onStartDemo }: InspirationPanelProps)
 
 					<div className="inspiration-demo__header">
 						{SourceIcon && (
-							<SourceIcon aria-hidden className="inspiration-demo__icon" size={20} />
+							<SourceIcon
+								aria-hidden
+								className="inspiration-demo__icon"
+								size={20}
+							/>
 						)}
 						<div>
 							<h2 className="inspiration-demo__title">{config.title}</h2>

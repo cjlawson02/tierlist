@@ -21,12 +21,12 @@ async function fetchRandomCatUrl(): Promise<string> {
 		headers: { Accept: 'application/json' },
 	});
 	if (!response.ok) {
-		throw new Error(`Cataas unavailable (${String(response.status)})`);
+		throw new Error(`CATaaS unavailable (${String(response.status)})`);
 	}
 	const data = (await response.json()) as CataasCatResponse;
 	const url = parseCataasCatUrl(data);
 	if (!url) {
-		throw new Error('Cataas returned an invalid cat response');
+		throw new Error('CATaaS returned an invalid cat response');
 	}
 	return url;
 }
@@ -54,7 +54,7 @@ export async function pickCataasImages(count: number): Promise<string[]> {
 
 	if (urls.length < count) {
 		throw new Error(
-			`Could only load ${String(urls.length)} unique cats from Cataas`,
+			`Could only load ${String(urls.length)} unique cats from CATaaS`,
 		);
 	}
 

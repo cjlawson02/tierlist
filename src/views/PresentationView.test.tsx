@@ -86,6 +86,34 @@ describe('PresentationView', () => {
 		).toBeInTheDocument();
 	});
 
+	it('runs the finale carousel after continue and then closes it', async () => {
+		const { user } = renderWithProviders(
+			<PresentationView onExitSetup={vi.fn()} />,
+			{ userEvent: { advanceTimers: vi.advanceTimersByTime } },
+		);
+
+		await screen.findByRole('dialog', { name: /Photo 1 of 1/i });
+		await user.click(screen.getByRole('button', { name: 'S' }));
+		await vi.advanceTimersByTimeAsync(800);
+
+		await user.click(await screen.findByRole('button', { name: /Continue/i }));
+		expect(
+			await screen.findByRole('dialog', { name: /Finale carousel/i }),
+		).toBeInTheDocument();
+
+		await vi.advanceTimersByTimeAsync(20000);
+		expect(
+			screen.getByRole('dialog', { name: /Finale carousel/i }),
+		).toBeInTheDocument();
+
+		await user.keyboard('{Escape}');
+		await waitFor(() => {
+			expect(
+				screen.queryByRole('dialog', { name: /Finale carousel/i }),
+			).not.toBeInTheDocument();
+		});
+	});
+
 	it('calls onExitSetup when Back to setup is clicked', async () => {
 		const onExitSetup = vi.fn();
 		const { user } = renderWithProviders(

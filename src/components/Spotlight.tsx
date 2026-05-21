@@ -179,33 +179,37 @@ export default function Spotlight({
 								className="spotlight-tier-bar"
 								style={{ '--tier-count': rows.length } as CSSProperties}
 							>
-								{rows.map((row, index) => (
-									<span
-										key={row.id}
-										className="spotlight-tier-chip-wrap"
-										style={{ animationDelay: `${String(80 + index * 45)}ms` }}
-									>
-										<button
-											type="button"
-											className="spotlight-tier-chip"
-											style={
-												{
-													backgroundColor: row.color,
-													borderColor: row.color,
-													color: 'var(--stage-bg)',
-													'--chip-glow': row.color,
-												} as CSSProperties
-											}
-											onClick={() => {
-												assign(row.id, row.name, row.color);
+								<div className="spotlight-tier-bar__track">
+									{rows.map((row, index) => (
+										<span
+											key={row.id}
+											className="spotlight-tier-chip-wrap"
+											style={{
+												animationDelay: `${String(80 + index * 45)}ms`,
 											}}
 										>
-											<span className="spotlight-tier-chip-face">
-												{row.name}
-											</span>
-										</button>
-									</span>
-								))}
+											<button
+												type="button"
+												className="spotlight-tier-chip"
+												style={
+													{
+														backgroundColor: row.color,
+														borderColor: row.color,
+														color: 'var(--stage-bg)',
+														'--chip-glow': row.color,
+													} as CSSProperties
+												}
+												onClick={() => {
+													assign(row.id, row.name, row.color);
+												}}
+											>
+												<span className="spotlight-tier-chip-face">
+													{row.name}
+												</span>
+											</button>
+										</span>
+									))}
+								</div>
 							</div>
 						)}
 					</div>

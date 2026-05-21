@@ -3,7 +3,11 @@ import { useEffect, useState } from 'react';
 import { getSoundMuted, setSoundMuted } from '../../effects/sounds';
 import IconButton from '../IconButton';
 
-export default function SoundToggle() {
+interface SoundToggleProps {
+	iconOnly?: boolean;
+}
+
+export default function SoundToggle({ iconOnly = false }: SoundToggleProps) {
 	const [muted, setMuted] = useState(() => getSoundMuted());
 
 	useEffect(() => {
@@ -14,6 +18,7 @@ export default function SoundToggle() {
 		<IconButton
 			icon={muted ? VolumeX : Volume2}
 			label={muted ? 'Unmute sounds' : 'Mute sounds'}
+			iconOnly={iconOnly}
 			onClick={() => {
 				setMuted((m) => !m);
 			}}

@@ -34,10 +34,16 @@ describe('screenFlash', () => {
 		expect(overlay?.classList.contains('screen-desaturate--active')).toBe(true);
 	});
 
-	it('shakeScreen adds and removes body shake classes', () => {
+	it('shakeScreen adds and removes root shake classes', () => {
+		const root = document.createElement('div');
+		root.id = 'root';
+		document.body.appendChild(root);
+
 		shakeScreen('light');
-		expect(document.body.classList.contains('screen-shake--light')).toBe(true);
+		expect(root.classList.contains('screen-shake--light')).toBe(true);
 		vi.advanceTimersByTime(400);
-		expect(document.body.classList.contains('screen-shake--light')).toBe(false);
+		expect(root.classList.contains('screen-shake--light')).toBe(false);
+
+		root.remove();
 	});
 });
