@@ -8,13 +8,13 @@ import {
 	useState,
 	type CSSProperties,
 } from 'react';
-import ImagePool from '../components/ImagePool';
 import IconButton from '../components/IconButton';
 import Spotlight from '../components/Spotlight';
 import TierRow from '../components/TierRow';
 import BroadcastLowerThird from '../components/presentation/BroadcastLowerThird';
 import EliteFinaleCelebration from '../components/presentation/EliteFinaleCelebration';
 import FinaleOverlay from '../components/presentation/FinaleOverlay';
+import PresentationQueue from '../components/presentation/PresentationQueue';
 import SoundToggle from '../components/presentation/SoundToggle';
 import { celebrateTier } from '../effects/celebrate';
 import {
@@ -29,6 +29,7 @@ import {
 	getLowerThirdLabel,
 	getTierRank,
 	isEliteTier,
+	QUEUE,
 } from '../presentationConfig';
 import { useSetupStore } from '../store/setupStore';
 
@@ -50,6 +51,8 @@ export default function PresentationView({
 	const finaleTriggered = useRef(false);
 	const assignmentsThisSession = useRef(0);
 	const highlightTimerRef = useRef<number | null>(null);
+	const queueAdvanceTimerRef = useRef<number | null>(null);
+	const queueStartedRef = useRef(false);
 
 	const [totalImages] = useState(
 		() =>
@@ -58,6 +61,7 @@ export default function PresentationView({
 
 	const [labelSize, setLabelSize] = useState<number | null>(null);
 	const [spotlightImageId, setSpotlightImageId] = useState<string | null>(null);
+	const [queuePaused, setQueuePaused] = useState(false);
 	const [highlightRowId, setHighlightRowId] = useState<string | null>(null);
 	const [highlightColor, setHighlightColor] = useState<string | null>(null);
 	const [landedImageId, setLandedImageId] = useState<string | null>(null);
@@ -142,6 +146,9 @@ export default function PresentationView({
 			if (highlightTimerRef.current != null) {
 				window.clearTimeout(highlightTimerRef.current);
 			}
+			if (queueAdvanceTimerRef.current != null) {
+				window.clearTimeout(queueAdvanceTimerRef.current);
+			}
 		};
 	}, []);
 
@@ -182,6 +189,38 @@ export default function PresentationView({
 				null)
 			: null;
 
+	const openSpotlight = useCallback(async (imageId: string) => {
+		await resumeAudioContext();
+		playSpotlightOpen();
+		setQueuePaused(false);
+		setSpotlightImageId(imageId);
+	}, []);
+
+	const clearQueueAdvance = useCallback(() => {
+		if (queueAdvanceTimerRef.current != null) {
+			window.clearTimeout(queueAdvanceTimerRef.current);
+			queueAdvanceTimerRef.current = null;
+		}
+	}, []);
+
+	const scheduleQueueAdvance = useCallback(
+		(nextImageId: string, delayMs: number) => {
+			clearQueueAdvance();
+			queueAdvanceTimerRef.current = window.setTimeout(() => {
+				queueAdvanceTimerRef.current = null;
+				void openSpotlight(nextImageId);
+			}, delayMs);
+		},
+		[clearQueueAdvance, openSpotlight],
+	);
+
+	const resumeQueue = useCallback(() => {
+		if (spotlightImageId || untieredImages.length === 0) {
+			return;
+		}
+		void openSpotlight(untieredImages[0].id);
+	}, [openSpotlight, spotlightImageId, untieredImages]);
+
 	const handleAssignTier = (
 		rowId: string,
 		rowName: string,
@@ -196,6 +235,8 @@ export default function PresentationView({
 		if (!row) {
 			return;
 		}
+		const nextImageId =
+			untieredImages.find((image) => image.id !== imageId)?.id ?? null;
 		const rank = getTierRank(tierIndex, rows.length);
 		const tone = getDisappointmentTone(tierIndex, rows.length);
 		const sad = rank >= 0.5;
@@ -205,6 +246,7 @@ export default function PresentationView({
 		assignmentsThisSession.current += 1;
 		setSpotlightImageId(null);
 		moveImage(imageId, { type: 'row', rowId }, row.images.length);
+		setQueuePaused(false);
 		setHighlightRowId(rowId);
 		setHighlightColor(rowColor);
 		setHighlightSad(sad);
@@ -227,13 +269,67 @@ export default function PresentationView({
 			setHighlightColor(null);
 			setHighlightSad(false);
 		}, highlightMs);
+
+		if (nextImageId) {
+			scheduleQueueAdvance(
+				nextImageId,
+				highlightMs + QUEUE.pauseAfterAssignmentMs,
+			);
+		}
 	};
 
-	const openSpotlight = useCallback(async (imageId: string) => {
-		await resumeAudioContext();
-		playSpotlightOpen();
-		setSpotlightImageId(imageId);
-	}, []);
+	useEffect(() => {
+		if (
+			introActive ||
+			spotlightImageId ||
+			untieredImages.length === 0 ||
+			queuePaused
+		) {
+			return;
+		}
+		if (!queueStartedRef.current) {
+			queueStartedRef.current = true;
+			void openSpotlight(untieredImages[0].id);
+		}
+	}, [
+		introActive,
+		openSpotlight,
+		queuePaused,
+		spotlightImageId,
+		untieredImages,
+	]);
+
+	useEffect(() => {
+		if (spotlightImageId || !queuePaused || untieredImages.length === 0) {
+			return;
+		}
+		const onKeyDown = (event: KeyboardEvent) => {
+			if (event.key !== ' ' && event.key !== 'Enter' && event.key !== 'n') {
+				return;
+			}
+			const target = event.target;
+			if (
+				target instanceof HTMLElement &&
+				(target.tagName === 'INPUT' ||
+					target.tagName === 'TEXTAREA' ||
+					target.isContentEditable)
+			) {
+				return;
+			}
+			event.preventDefault();
+			resumeQueue();
+		};
+		window.addEventListener('keydown', onKeyDown);
+		return () => {
+			window.removeEventListener('keydown', onKeyDown);
+		};
+	}, [queuePaused, resumeQueue, spotlightImageId, untieredImages.length]);
+
+	const assignedCount = totalImages - untieredImages.length;
+	const spotlightPhotoLabel =
+		spotlightImageId && totalImages > 0
+			? `Photo ${String(assignedCount + 1)} of ${String(totalImages)}`
+			: null;
 
 	return (
 		<>
@@ -300,18 +396,18 @@ export default function PresentationView({
 
 				<section
 					className="pool-section presentation-pool"
-					aria-label="Image pool"
+					aria-label="Photo queue"
 				>
-					<p className="pool-label">Up next</p>
-					<ImagePool
+					<PresentationQueue
 						images={untieredImages}
+						totalImages={totalImages}
 						spotlightImageId={spotlightImageId}
-						onImageClick={(imageId) => {
+						queuePaused={queuePaused}
+						onResume={resumeQueue}
+						onSelectImage={(imageId) => {
+							clearQueueAdvance();
 							void openSpotlight(imageId);
 						}}
-						layoutScroll
-						highlightFirst
-						introActive={introActive}
 					/>
 				</section>
 			</main>
@@ -326,9 +422,12 @@ export default function PresentationView({
 			<Spotlight
 				mode="assign"
 				image={spotlightImage}
+				photoLabel={spotlightPhotoLabel}
 				rows={rows}
 				onRelease={() => {
+					clearQueueAdvance();
 					setSpotlightImageId(null);
+					setQueuePaused(true);
 				}}
 				onAssignTier={handleAssignTier}
 			/>

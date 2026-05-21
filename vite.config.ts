@@ -4,6 +4,15 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
 	plugins: [react()],
 	base: './',
+	server: {
+		proxy: {
+			'/tpaas-proxy': {
+				target: 'https://tpaas.chrislawson.dev',
+				changeOrigin: true,
+				rewrite: (path) => path.replace(/^\/tpaas-proxy/, ''),
+			},
+		},
+	},
 	test: {
 		environment: 'jsdom',
 		setupFiles: ['src/test/setup.ts'],

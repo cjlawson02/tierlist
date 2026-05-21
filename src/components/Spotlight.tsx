@@ -14,6 +14,7 @@ interface SpotlightProps {
 	/** Clears spotlight selection in parent immediately so the list thumbnail reappears */
 	onRelease: () => void;
 	mode?: 'assign' | 'preview';
+	photoLabel?: string | null;
 	rows?: TierRow[];
 	onAssignTier?: (
 		rowId: string,
@@ -27,6 +28,7 @@ export default function Spotlight({
 	image,
 	onRelease,
 	mode = 'assign',
+	photoLabel,
 	rows = [],
 	onAssignTier,
 }: SpotlightProps) {
@@ -63,9 +65,9 @@ export default function Spotlight({
 				return;
 			}
 			onAssignTier(rowId, rowName, rowColor, tierIndex);
-			requestClose();
+			setIsVisible(false);
 		},
-		[onAssignTier, requestClose, rows],
+		[onAssignTier, rows],
 	);
 
 	const handleExitComplete = useCallback(() => {
@@ -137,7 +139,9 @@ export default function Spotlight({
 					aria-label={
 						isPreview
 							? 'Image preview — press Escape to close'
-							: 'Image spotlight — assign a tier or press Escape to close'
+							: photoLabel
+								? `${photoLabel} — assign a tier or press Escape to pause`
+								: 'Image spotlight — assign a tier or press Escape to pause'
 					}
 					tabIndex={-1}
 					ref={dialogRef}
@@ -147,7 +151,12 @@ export default function Spotlight({
 					transition={{ duration: 0.22 }}
 					onClick={requestClose}
 				>
-					<div className="spotlight-panel">
+					<div
+						className="spotlight-panel"
+						onClick={(event) => {
+							event.stopPropagation();
+						}}
+					>
 						<div className="spotlight-image-wrap">
 							<div className="spotlight-vignette" aria-hidden="true" />
 							<motion.div

@@ -52,7 +52,7 @@ export function flashTierColor(
 	);
 	void el.offsetWidth;
 	el.classList.add('screen-color-wash--active');
-	if (intensity === 'celebrate' || intensity === 'somber') {
+	if (intensity === 'celebrate') {
 		el.classList.add('screen-color-wash--strong');
 	}
 	if (intensity === 'dull') {
@@ -62,11 +62,13 @@ export function flashTierColor(
 		el.classList.add('screen-color-wash--somber');
 	}
 	const duration =
-		intensity === 'celebrate' || intensity === 'somber'
+		intensity === 'celebrate'
 			? 520
-			: intensity === 'dull'
+			: intensity === 'somber'
 				? 420
-				: 380;
+				: intensity === 'dull'
+					? 420
+					: 380;
 	if (washTimer != null) {
 		window.clearTimeout(washTimer);
 	}

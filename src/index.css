@@ -146,22 +146,32 @@ span.item:hover .image-delete-btn,
 }
 
 .title-editor {
-	display: flex;
+	display: inline-flex;
+	align-items: center;
 	justify-content: center;
+	gap: 0.65rem;
 	max-width: 100%;
+}
+
+.title-editor-spacer {
+	flex-shrink: 0;
+	inline-size: calc(1.3rem + 22px);
+	block-size: calc(1.3rem + 22px);
 }
 
 .title-input {
 	font: inherit;
 	letter-spacing: inherit;
+	line-height: 1;
 	text-align: center;
 	background: var(--color-surface);
 	border: 1px solid var(--color-border);
 	border-radius: 10px;
 	color: var(--color-text);
-	padding: 0.08em 0.35em;
+	padding: 0.12em 0.5em;
 	min-width: min(100%, 12ch);
 	max-width: 100%;
+	margin: 0;
 }
 
 .title-input:focus {

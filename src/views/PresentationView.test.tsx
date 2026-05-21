@@ -3,6 +3,7 @@ import PresentationView from './PresentationView';
 import { renderWithProviders, screen, waitFor } from '../test/render';
 import { DATA_IMAGE_PNG } from '../test/fixtures';
 import { getSetupStoreState } from '../test/store';
+import { QUEUE } from '../presentationConfig';
 
 vi.mock('../effects/celebrate', () => ({
 	celebrateTier: vi.fn().mockResolvedValue(undefined),
@@ -20,20 +21,53 @@ describe('PresentationView', () => {
 		vi.useRealTimers();
 	});
 
-	it('assigns an image from the pool to a tier', async () => {
+	it('auto-opens the first photo and assigns it from the queue', async () => {
 		const { user } = renderWithProviders(
 			<PresentationView onExitSetup={vi.fn()} />,
 			{ userEvent: { advanceTimers: vi.advanceTimersByTime } },
 		);
 
-		await user.click(screen.getByRole('button', { name: 'View image' }));
-		await screen.findByRole('dialog', { name: /assign a tier/i });
-		await user.keyboard('s');
+		await screen.findByRole('dialog', { name: /Photo 1 of 1/i });
+		await user.click(screen.getByRole('button', { name: 'S' }));
 
 		await waitFor(() => {
 			expect(getSetupStoreState().untieredImages).toHaveLength(0);
 		});
 		expect(getSetupStoreState().rows[0]?.images).toHaveLength(1);
+	});
+
+	it('auto-advances to the next photo after assigning a tier', async () => {
+		getSetupStoreState().addImages([DATA_IMAGE_PNG]);
+
+		const { user } = renderWithProviders(
+			<PresentationView onExitSetup={vi.fn()} />,
+			{ userEvent: { advanceTimers: vi.advanceTimersByTime } },
+		);
+
+		await screen.findByRole('dialog', { name: /Photo 1 of 2/i });
+		await user.click(screen.getByRole('button', { name: 'S' }));
+		await vi.advanceTimersByTimeAsync(520 + QUEUE.pauseAfterAssignmentMs);
+
+		expect(
+			await screen.findByRole('dialog', { name: /Photo 2 of 2/i }),
+		).toBeInTheDocument();
+	});
+
+	it('pauses when the spotlight is dismissed and resumes with Space', async () => {
+		const { user } = renderWithProviders(
+			<PresentationView onExitSetup={vi.fn()} />,
+			{ userEvent: { advanceTimers: vi.advanceTimersByTime } },
+		);
+
+		const dialog = await screen.findByRole('dialog', { name: /Photo 1 of 1/i });
+		await user.click(dialog);
+
+		expect(await screen.findByText('Paused')).toBeInTheDocument();
+		await user.keyboard(' ');
+
+		expect(
+			await screen.findByRole('dialog', { name: /Photo 1 of 1/i }),
+		).toBeInTheDocument();
 	});
 
 	it('shows the finale overlay after all images are assigned', async () => {
@@ -42,9 +76,8 @@ describe('PresentationView', () => {
 			{ userEvent: { advanceTimers: vi.advanceTimersByTime } },
 		);
 
-		await user.click(screen.getByRole('button', { name: 'View image' }));
-		await screen.findByRole('dialog', { name: /assign a tier/i });
-		await user.keyboard('s');
+		await screen.findByRole('dialog', { name: /Photo 1 of 1/i });
+		await user.click(screen.getByRole('button', { name: 'S' }));
 
 		await vi.advanceTimersByTimeAsync(800);
 

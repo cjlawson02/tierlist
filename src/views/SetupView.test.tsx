@@ -22,7 +22,10 @@ describe('SetupView', () => {
 
 	it('opens spotlight preview when a pool image is clicked', async () => {
 		const { user } = renderWithProviders(
-			<SetupView onStartPresentation={vi.fn()} />,
+			<SetupView
+				onStartPresentation={vi.fn()}
+				onStartInspirationDemo={vi.fn().mockResolvedValue(undefined)}
+			/>,
 			{ userEvent: { advanceTimers: vi.advanceTimersByTime } },
 		);
 
@@ -35,9 +38,15 @@ describe('SetupView', () => {
 
 	it('adds pasted images and shows a toast', async () => {
 		mockFileReaderResult(DATA_IMAGE_PNG);
-		renderWithProviders(<SetupView onStartPresentation={vi.fn()} />, {
-			userEvent: { advanceTimers: vi.advanceTimersByTime },
-		});
+		renderWithProviders(
+			<SetupView
+				onStartPresentation={vi.fn()}
+				onStartInspirationDemo={vi.fn().mockResolvedValue(undefined)}
+			/>,
+			{
+				userEvent: { advanceTimers: vi.advanceTimersByTime },
+			},
+		);
 
 		const file = createBlobFile('paste-image', 'pasted.png', 'image/png');
 		const pasteEvent = new Event('paste', { bubbles: true, cancelable: true });
@@ -58,9 +67,15 @@ describe('SetupView', () => {
 
 	it('clears the toast after three seconds', async () => {
 		mockFileReaderResult(DATA_IMAGE_PNG);
-		renderWithProviders(<SetupView onStartPresentation={vi.fn()} />, {
-			userEvent: { advanceTimers: vi.advanceTimersByTime },
-		});
+		renderWithProviders(
+			<SetupView
+				onStartPresentation={vi.fn()}
+				onStartInspirationDemo={vi.fn().mockResolvedValue(undefined)}
+			/>,
+			{
+				userEvent: { advanceTimers: vi.advanceTimersByTime },
+			},
+		);
 
 		const file = createBlobFile('paste-image', 'pasted.png', 'image/png');
 		const pasteEvent = new Event('paste', { bubbles: true, cancelable: true });

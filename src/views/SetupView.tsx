@@ -3,15 +3,24 @@ import EditableTitle from '../components/EditableTitle';
 import ImagePool from '../components/ImagePool';
 import Spotlight from '../components/Spotlight';
 import SetupToolbar from '../components/setup/SetupToolbar';
+import InspirationPanel from '../components/setup/InspirationPanel';
+import type { InspirationSource } from '../integrations/inspiration';
 import { playSpotlightOpen, resumeAudioContext } from '../effects/sounds';
 import { useSetupStore } from '../store/setupStore';
 import { readFileAsDataUrl } from '../tierlist';
 
 interface SetupViewProps {
 	onStartPresentation: () => void;
+	onStartInspirationDemo: (
+		source: InspirationSource,
+		count: number,
+	) => Promise<void>;
 }
 
-export default function SetupView({ onStartPresentation }: SetupViewProps) {
+export default function SetupView({
+	onStartPresentation,
+	onStartInspirationDemo,
+}: SetupViewProps) {
 	const title = useSetupStore((state) => state.title);
 	const untieredImages = useSetupStore((state) => state.untieredImages);
 	const setTitle = useSetupStore((state) => state.setTitle);
@@ -76,6 +85,7 @@ export default function SetupView({ onStartPresentation }: SetupViewProps) {
 			</header>
 
 			<main className="main-content setup-main">
+				<InspirationPanel onStartDemo={onStartInspirationDemo} />
 				<section className="setup-panel" aria-label="Photos to rank">
 					<SetupToolbar
 						onToast={setToast}

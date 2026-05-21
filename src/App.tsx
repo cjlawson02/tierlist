@@ -1,5 +1,9 @@
 import { AnimatePresence, motion, MotionConfig } from 'motion/react';
 import { useEffect, useState } from 'react';
+import { pickCataasImages } from './integrations/cataas';
+import type { InspirationSource } from './integrations/inspiration';
+import { INSPIRATION_SOURCES } from './integrations/inspiration';
+import { pickTpaasImages } from './integrations/tpaas';
 import { EFFECTS } from './presentationConfig';
 import { resumeAudioContext, stopAllSounds } from './effects/sounds';
 import { useSetupStore } from './store/setupStore';
@@ -10,8 +14,8 @@ import type { AppPhase } from './types';
 export default function App() {
 	const unsavedChanges = useSetupStore((state) => state.unsavedChanges);
 	const rows = useSetupStore((state) => state.rows);
-	const untieredImages = useSetupStore((state) => state.untieredImages);
 	const resetPresentation = useSetupStore((state) => state.resetPresentation);
+	const loadDemo = useSetupStore((state) => state.loadDemo);
 
 	const [appPhase, setAppPhase] = useState<AppPhase>('setup');
 	const [curtain, setCurtain] = useState(false);
@@ -61,7 +65,7 @@ export default function App() {
 	}, [introActive, rows.length]);
 
 	const startPresentation = () => {
-		if (untieredImages.length === 0) {
+		if (useSetupStore.getState().untieredImages.length === 0) {
 			alert('Add at least one photo to the pool before starting presentation.');
 			return;
 		}
@@ -74,6 +78,26 @@ export default function App() {
 				setCurtain(false);
 			}, 80);
 		}, 400);
+	};
+
+	const startInspirationDemo = async (
+		source: InspirationSource,
+		count: number,
+	) => {
+		try {
+			const images =
+				source === 'tpaas'
+					? await pickTpaasImages(count)
+					: await pickCataasImages(count);
+			loadDemo(INSPIRATION_SOURCES[source].title, images);
+			startPresentation();
+		} catch (err) {
+			alert(
+				err instanceof Error
+					? err.message
+					: `Failed to load ${INSPIRATION_SOURCES[source].itemLabel} from ${INSPIRATION_SOURCES[source].siteName}`,
+			);
+		}
 	};
 
 	const exitPresentation = () => {
@@ -96,7 +120,10 @@ export default function App() {
 		<MotionConfig reducedMotion="user">
 			<div className={`app-root phase-${appPhase}`}>
 				{appPhase === 'setup' ? (
-					<SetupView onStartPresentation={startPresentation} />
+					<SetupView
+						onStartPresentation={startPresentation}
+						onStartInspirationDemo={startInspirationDemo}
+					/>
 				) : (
 					<PresentationView
 						onExitSetup={exitPresentation}

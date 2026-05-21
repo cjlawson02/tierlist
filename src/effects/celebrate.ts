@@ -3,6 +3,7 @@ import {
 	getDisappointmentTone,
 	getTierEffectForRank,
 	getTierRank,
+	shouldFireConfetti,
 } from '../presentationConfig';
 import {
 	desaturateScreen,
@@ -57,10 +58,6 @@ function tierColors(color: string): string[] {
 	return [color, lighten(color, 0.35), lighten(color, 0.6), '#ffffff'];
 }
 
-function sadColors(color: string): string[] {
-	return [muteColor(color, 0.55), '#777788', '#555566', '#444450'];
-}
-
 function washForRank(tierIndex: number, totalTiers: number): WashIntensity {
 	const tone = getDisappointmentTone(tierIndex, totalTiers);
 	switch (tone) {
@@ -76,6 +73,11 @@ function washForRank(tierIndex: number, totalTiers: number): WashIntensity {
 		case 'devastating':
 			return 'somber';
 	}
+}
+
+async function clearConfetti(): Promise<void> {
+	const fire = await getConfetti();
+	fire?.reset();
 }
 
 async function fireConfetti(
@@ -183,72 +185,6 @@ async function fireSparkle(color: string): Promise<void> {
 	});
 }
 
-async function fireFizzle(color: string): Promise<void> {
-	const fire = await getConfetti();
-	if (!fire) {
-		return;
-	}
-	const colors = [...sadColors(color), '#666677'];
-	void fire({
-		particleCount: 18,
-		spread: 55,
-		startVelocity: 18,
-		gravity: 1.6,
-		scalar: 0.55,
-		ticks: 50,
-		decay: 0.92,
-		colors,
-		origin: { y: 0.55, x: 0.5 },
-		disableForReducedMotion: true,
-	});
-	window.setTimeout(() => {
-		void fire({
-			particleCount: 12,
-			angle: 270,
-			spread: 25,
-			startVelocity: 6,
-			gravity: 1.8,
-			scalar: 0.45,
-			ticks: 40,
-			colors: ['#888899', '#666677'],
-			origin: { y: 0.45, x: 0.5 },
-			disableForReducedMotion: true,
-		});
-	}, 120);
-}
-
-async function fireRain(
-	color: string,
-	intensity: 'droop' | 'devastating',
-): Promise<void> {
-	const fire = await getConfetti();
-	if (!fire) {
-		return;
-	}
-	const gray = sadColors(color);
-	const bursts = intensity === 'devastating' ? 5 : 2;
-	const particles = intensity === 'devastating' ? 45 : 22;
-	for (let i = 0; i < bursts; i++) {
-		window.setTimeout(
-			() => {
-				void fire({
-					particleCount: particles,
-					angle: 270,
-					spread: intensity === 'devastating' ? 45 : 30,
-					startVelocity: intensity === 'devastating' ? 20 : 14,
-					gravity: 1.5,
-					drift: (Math.random() - 0.5) * 2,
-					scalar: 0.75,
-					colors: gray,
-					origin: { x: 0.1 + Math.random() * 0.8, y: -0.05 },
-					disableForReducedMotion: true,
-				});
-			},
-			i * (intensity === 'devastating' ? 90 : 130),
-		);
-	}
-}
-
 let slideshowConfettiTimer: number | null = null;
 
 export function stopSlideshowConfetti(): void {
@@ -288,37 +224,44 @@ export async function celebrateTier(
 	if (prefersReducedMotion()) {
 		return;
 	}
+	if (!shouldFireConfetti(tierIndex, totalTiers)) {
+		await clearConfetti();
+	}
 	const effect = getTierEffectForRank(tierIndex, totalTiers);
 	const rank = getTierRank(tierIndex, totalTiers);
 	const washColor = rank >= 0.5 ? muteColor(color, 0.45 + rank * 0.35) : color;
 
 	flashTierColor(washColor, washForRank(tierIndex, totalTiers));
 
+	if (!shouldFireConfetti(tierIndex, totalTiers)) {
+		await clearConfetti();
+	} else {
+		switch (effect) {
+			case 'confetti':
+				await fireConfetti(color, 'hero');
+				break;
+			case 'sparkle':
+				await fireSparkle(color);
+				break;
+			case 'burst':
+				await fireConfetti(color, 'normal');
+				break;
+		}
+	}
+
 	switch (effect) {
-		case 'confetti':
-			await fireConfetti(color, 'hero');
-			break;
-		case 'sparkle':
-			await fireSparkle(color);
-			break;
-		case 'burst':
-			await fireConfetti(color, 'normal');
-			break;
-		case 'fizzle':
-			await fireFizzle(color);
-			break;
 		case 'wilt':
 			desaturateScreen('light');
+			break;
+		case 'fizzle':
 			break;
 		case 'droop':
 			desaturateScreen('medium');
 			shakeScreen('light');
-			await fireRain(color, 'droop');
 			break;
 		case 'rain':
 			desaturateScreen('heavy');
 			shakeScreen('heavy');
-			await fireRain(color, 'devastating');
 			break;
 	}
 }

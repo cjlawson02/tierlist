@@ -21,6 +21,12 @@ export const EFFECTS = {
 	broadcastMode: true,
 } as const;
 
+/** Live presentation queue — auto-reveal photos in order */
+export const QUEUE = {
+	/** Pause after tier landing animation before opening the next photo */
+	pauseAfterAssignmentMs: 1000,
+} as const;
+
 export const BUNDLE_SIZE = {
 	infoMb: 5,
 	confirmMb: 10,
@@ -171,7 +177,7 @@ export function getTierEffectForRank(
 	return TONE_TO_EFFECT[getDisappointmentTone(tierIndex, totalTiers)];
 }
 
-/** S/A/B only — meh tier and below skip canvas-confetti particles */
+/** S/A/B only — C tier and below skip canvas-confetti particles */
 export function shouldFireConfetti(
 	tierIndex: number,
 	totalTiers: number,

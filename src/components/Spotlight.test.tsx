@@ -54,7 +54,7 @@ describe('Spotlight', () => {
 		await user.keyboard('s');
 
 		expect(onAssignTier).toHaveBeenCalledWith('row-s', 'S', '#f00', 0);
-		expect(onRelease).toHaveBeenCalled();
+		expect(onRelease).not.toHaveBeenCalled();
 	});
 
 	it('assigns a tier when a chip is clicked', async () => {

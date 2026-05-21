@@ -113,6 +113,7 @@ type SetupStore = TierListState & {
 	deleteImage: (imageId: string) => void;
 	moveImage: (imageId: string, target: DropTarget, targetIndex: number) => void;
 	resetPresentation: () => void;
+	loadDemo: (title: string, srcs: string[]) => void;
 	importFile: (file: File) => Promise<void>;
 	exportFile: (name: string) => Promise<number | null>;
 };
@@ -171,6 +172,16 @@ export const useSetupStore = create<SetupStore>((set, get) => ({
 				],
 				unsavedChanges: true,
 			};
+		});
+	},
+	loadDemo: (title, srcs) => {
+		resetStoreIds();
+		set({
+			title,
+			rows: PRESENTATION_TIERS.map((name, i) => createRow(name, i)),
+			untieredImages: srcs.map(createImage),
+			vertical: false,
+			unsavedChanges: true,
 		});
 	},
 	importFile: async (file) => {

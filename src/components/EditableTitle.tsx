@@ -57,6 +57,7 @@ export default function EditableTitle({ value, onChange }: EditableTitleProps) {
 					}}
 					onBlur={commit}
 				/>
+				<span className="title-editor-spacer" aria-hidden="true" />
 			</div>
 		);
 	}
