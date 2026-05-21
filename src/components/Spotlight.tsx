@@ -191,7 +191,9 @@ export default function Spotlight({
 												assign(row.id, row.name, row.color);
 											}}
 										>
-											{row.name}
+											<span className="spotlight-tier-chip-face">
+												{row.name}
+											</span>
 										</button>
 									</span>
 								))}

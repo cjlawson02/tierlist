@@ -444,6 +444,8 @@ body.ambient-bg::before {
 	width: 100%;
 	padding: 0.25rem 0.75rem;
 	position: relative;
+	overflow: hidden;
+	pointer-events: none;
 }
 
 .spotlight-layout-frame--thumb {
@@ -467,13 +469,15 @@ body.ambient-bg::before {
 }
 
 .spotlight-layout-frame--hero {
-	width: min(94vmin, calc(100vw - 1.5rem));
-	height: min(calc(100dvh - 8.5rem), 86vh);
+	width: min(94vmin, calc(100vw - 1.5rem), 100%);
+	height: min(calc(100dvh - 8.5rem), 86vh, 100%);
+	max-height: 100%;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	line-height: 0;
-	flex-shrink: 0;
+	flex-shrink: 1;
+	min-height: 0;
 	pointer-events: auto;
 	cursor: default;
 }
@@ -499,6 +503,8 @@ body.ambient-bg::before {
 	width: 100%;
 	max-width: min(98vw, 68rem);
 	flex-shrink: 0;
+	position: relative;
+	z-index: 1;
 	pointer-events: auto;
 	--tier-chip-size: min(
 		168px,
@@ -527,14 +533,29 @@ body.ambient-bg::before {
 	align-items: center;
 	justify-content: center;
 	position: relative;
+	background: transparent;
+	overflow: visible;
+	cursor: pointer;
+}
+
+.spotlight-tier-chip-face {
+	--chip-size: var(--tier-chip-size);
+	position: absolute;
+	inset: 0;
+	border: 2px solid transparent;
+	border-radius: inherit;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	isolation: isolate;
 	font-family: var(--font-display);
 	font-size: calc(var(--chip-size) * 0.65);
 	line-height: 1;
 	letter-spacing: 0.05em;
-	color: var(--stage-bg);
+	color: inherit;
 	font-weight: 600;
-	cursor: pointer;
+	background: inherit;
+	border-color: inherit;
 	box-shadow: none;
 	overflow: visible;
 	transform: scale(1);
@@ -555,12 +576,13 @@ body.ambient-bg::before {
 	}
 }
 
-.spotlight-tier-chip::before {
+.spotlight-tier-chip-face::before {
 	content: '';
 	position: absolute;
 	inset: calc(var(--chip-size) * -0.22);
 	border-radius: 50%;
 	z-index: -1;
+	pointer-events: none;
 	opacity: 0;
 	background: radial-gradient(
 		ellipse 95% 88% at 50% 50%,
@@ -575,12 +597,13 @@ body.ambient-bg::before {
 		filter 0.14s ease-out;
 }
 
-.spotlight-tier-chip::after {
+.spotlight-tier-chip-face::after {
 	content: '';
 	position: absolute;
 	inset: calc(var(--chip-size) * -0.28);
 	border-radius: 50%;
 	z-index: -2;
+	pointer-events: none;
 	opacity: 0;
 	background:
 		radial-gradient(
@@ -597,71 +620,70 @@ body.ambient-bg::before {
 	transition: opacity 0.14s ease-out;
 }
 
-.spotlight-tier-chip-wrap:nth-child(6n + 1) .spotlight-tier-chip::before {
+.spotlight-tier-chip-wrap:nth-child(6n + 1) .spotlight-tier-chip-face::before {
 	animation-delay: -0.15s;
 }
 
-.spotlight-tier-chip-wrap:nth-child(6n + 1) .spotlight-tier-chip::after {
+.spotlight-tier-chip-wrap:nth-child(6n + 1) .spotlight-tier-chip-face::after {
 	animation-duration: 2.9s;
 	animation-delay: -0.4s;
 }
 
-.spotlight-tier-chip-wrap:nth-child(6n + 2) .spotlight-tier-chip::before {
+.spotlight-tier-chip-wrap:nth-child(6n + 2) .spotlight-tier-chip-face::before {
 	animation-delay: -0.55s;
 }
 
-.spotlight-tier-chip-wrap:nth-child(6n + 2) .spotlight-tier-chip::after {
+.spotlight-tier-chip-wrap:nth-child(6n + 2) .spotlight-tier-chip-face::after {
 	animation-duration: 3.5s;
 	animation-delay: -1.2s;
 }
 
-.spotlight-tier-chip-wrap:nth-child(6n + 3) .spotlight-tier-chip::before {
+.spotlight-tier-chip-wrap:nth-child(6n + 3) .spotlight-tier-chip-face::before {
 	animation-delay: -0.95s;
 }
 
-.spotlight-tier-chip-wrap:nth-child(6n + 3) .spotlight-tier-chip::after {
+.spotlight-tier-chip-wrap:nth-child(6n + 3) .spotlight-tier-chip-face::after {
 	animation-duration: 3.1s;
 	animation-delay: -2s;
 }
 
-.spotlight-tier-chip-wrap:nth-child(6n + 4) .spotlight-tier-chip::before {
+.spotlight-tier-chip-wrap:nth-child(6n + 4) .spotlight-tier-chip-face::before {
 	animation-delay: -0.35s;
 }
 
-.spotlight-tier-chip-wrap:nth-child(6n + 4) .spotlight-tier-chip::after {
+.spotlight-tier-chip-wrap:nth-child(6n + 4) .spotlight-tier-chip-face::after {
 	animation-duration: 3.8s;
 	animation-delay: -0.8s;
 }
 
-.spotlight-tier-chip-wrap:nth-child(6n + 5) .spotlight-tier-chip::before {
+.spotlight-tier-chip-wrap:nth-child(6n + 5) .spotlight-tier-chip-face::before {
 	animation-delay: -0.75s;
 }
 
-.spotlight-tier-chip-wrap:nth-child(6n + 5) .spotlight-tier-chip::after {
+.spotlight-tier-chip-wrap:nth-child(6n + 5) .spotlight-tier-chip-face::after {
 	animation-duration: 2.7s;
 	animation-delay: -1.6s;
 }
 
-.spotlight-tier-chip-wrap:nth-child(6n) .spotlight-tier-chip::before {
+.spotlight-tier-chip-wrap:nth-child(6n) .spotlight-tier-chip-face::before {
 	animation-delay: -1.1s;
 }
 
-.spotlight-tier-chip-wrap:nth-child(6n) .spotlight-tier-chip::after {
+.spotlight-tier-chip-wrap:nth-child(6n) .spotlight-tier-chip-face::after {
 	animation-duration: 3.3s;
 	animation-delay: -2.4s;
 }
 
 .spotlight-tier-bar:has(.spotlight-tier-chip:hover)
-	.spotlight-tier-chip:not(:hover),
+	.spotlight-tier-chip:not(:hover) .spotlight-tier-chip-face,
 .spotlight-tier-bar:has(.spotlight-tier-chip:focus-visible)
-	.spotlight-tier-chip:not(:focus-visible) {
-	opacity: 1;
+	.spotlight-tier-chip:not(:focus-visible) .spotlight-tier-chip-face {
 	filter: brightness(0.62);
 	transform: scale(0.98);
 }
 
-.spotlight-tier-chip:hover,
-.spotlight-tier-chip:focus-visible {
+.spotlight-tier-chip:hover .spotlight-tier-chip-face,
+.spotlight-tier-chip:focus-visible .spotlight-tier-chip-face {
 	transform: scale(1.1);
 	animation: tierChipShadowPulse 1.4s ease-in-out infinite;
 	transition:
@@ -669,14 +691,14 @@ body.ambient-bg::before {
 		box-shadow 0.1s ease-out;
 }
 
-.spotlight-tier-chip:hover::before,
-.spotlight-tier-chip:focus-visible::before {
+.spotlight-tier-chip:hover .spotlight-tier-chip-face::before,
+.spotlight-tier-chip:focus-visible .spotlight-tier-chip-face::before {
 	opacity: 1;
 	animation: tierChipGlowPulse 1.4s ease-in-out infinite;
 }
 
-.spotlight-tier-chip:hover::after,
-.spotlight-tier-chip:focus-visible::after {
+.spotlight-tier-chip:hover .spotlight-tier-chip-face::after,
+.spotlight-tier-chip:focus-visible .spotlight-tier-chip-face::after {
 	opacity: 0.78;
 	animation: tierChipGlowDrift 3.2s ease-in-out infinite;
 }
@@ -734,8 +756,8 @@ body.ambient-bg::before {
 		animation: none;
 	}
 
-	.spotlight-tier-chip:hover,
-	.spotlight-tier-chip:focus-visible {
+	.spotlight-tier-chip:hover .spotlight-tier-chip-face,
+	.spotlight-tier-chip:focus-visible .spotlight-tier-chip-face {
 		animation: none;
 		box-shadow:
 			0 0 calc(var(--chip-size) * 0.28)
@@ -744,22 +766,22 @@ body.ambient-bg::before {
 				color-mix(in srgb, var(--chip-glow, currentColor) 42%, transparent);
 	}
 
-	.spotlight-tier-chip:hover::before,
-	.spotlight-tier-chip:focus-visible::before {
+	.spotlight-tier-chip:hover .spotlight-tier-chip-face::before,
+	.spotlight-tier-chip:focus-visible .spotlight-tier-chip-face::before {
 		animation: none;
 		opacity: 0.95;
 		transform: scale(1.04);
 	}
 
-	.spotlight-tier-chip:hover::after,
-	.spotlight-tier-chip:focus-visible::after {
+	.spotlight-tier-chip:hover .spotlight-tier-chip-face::after,
+	.spotlight-tier-chip:focus-visible .spotlight-tier-chip-face::after {
 		animation: none;
 		opacity: 0.72;
 		transform: translate(2%, -1%) scale(1.03);
 	}
 }
 
-.spotlight-tier-chip:active {
+.spotlight-tier-chip:active .spotlight-tier-chip-face {
 	transform: scale(1.05);
 	transition:
 		transform 0.06s ease-out,
