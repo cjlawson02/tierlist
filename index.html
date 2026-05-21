@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta
+			name="description"
+			content="Live Tier List presentation — rank photos into S through F tiers."
+		/>
+		<title>Tier List Presenter</title>
+	</head>
+	<body>
+		<div id="root">
+			<p style="font-family: system-ui, sans-serif; padding: 2rem; color: #666">
+				Loading…
+			</p>
+		</div>
+		<script type="module" src="/src/main.tsx"></script>
+		<script>
+			setTimeout(function () {
+				var root = document.getElementById('root');
+				if (
+					root &&
+					root.childNodes.length === 1 &&
+					root.textContent.trim() === 'Loading…'
+				) {
+					root.innerHTML =
+						'<div style="font-family:system-ui,sans-serif;padding:2rem;max-width:40rem;line-height:1.5">' +
+						'<h1>Tier List Presenter</h1>' +
+						'<p>Run the dev server first — opening <code>index.html</code> directly will not work.</p>' +
+						'<pre style="background:#f4f4f4;padding:1rem;border-radius:4px">npm run dev</pre>' +
+						'<p>Then open <a href="http://localhost:5173/">http://localhost:5173/</a></p>' +
+						'</div>';
+				}
+			}, 3000);
+		</script>
+	</body>
+</html>

@@ -1,0 +1,9 @@
+img/
+images.js
+*.swp
+node_modules/
+dist/
+coverage/
+.wrangler/
+.dev.vars*
+.playwright-mcp/

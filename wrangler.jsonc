@@ -1,0 +1,15 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "tierlist",
+	"compatibility_date": "2026-05-20",
+	"assets": {
+		"directory": "./dist",
+		"not_found_handling": "single-page-application",
+	},
+	"routes": [
+		{
+			"pattern": "tierlist.chrislawson.dev",
+			"custom_domain": true,
+		},
+	],
+}
