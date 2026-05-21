@@ -28,10 +28,15 @@ export const QUEUE = {
 } as const;
 
 export const BUNDLE_SIZE = {
-	infoMb: 5,
-	confirmMb: 10,
-	strongWarnMb: 25,
-	blockImportMb: 50,
+	maxEntryMb: 4,
+	maxPersistMb: 4,
+} as const;
+
+export const RECENT_TIERLISTS = {
+	maxEntries: 10,
+	ttlDays: 7,
+	storageKey: 'tiers-recent-tierlists',
+	storageVersion: 1,
 } as const;
 
 export const SOUND_MUTE_KEY = 'tiers-sound-muted';

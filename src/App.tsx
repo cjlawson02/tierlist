@@ -6,16 +6,26 @@ import { INSPIRATION_SOURCES } from './integrations/inspiration';
 import { pickTpaasImages } from './integrations/tpaas';
 import { EFFECTS } from './presentationConfig';
 import { resumeAudioContext, stopAllSounds } from './effects/sounds';
-import { useSetupStore } from './store/setupStore';
+import { type SaveToRecentResult, useSetupStore } from './store/setupStore';
 import SetupView from './views/SetupView';
 import PresentationView from './views/PresentationView';
 import type { AppPhase } from './types';
+
+function continueWithoutRecentSave(saveResult: SaveToRecentResult): boolean {
+	if (saveResult === 'too-large' || saveResult === 'quota-exceeded') {
+		return confirm(
+			'This tier list is too large to save locally. Continue without saving to recent lists?',
+		);
+	}
+	return true;
+}
 
 export default function App() {
 	const unsavedChanges = useSetupStore((state) => state.unsavedChanges);
 	const rows = useSetupStore((state) => state.rows);
 	const resetPresentation = useSetupStore((state) => state.resetPresentation);
 	const loadDemo = useSetupStore((state) => state.loadDemo);
+	const saveToRecent = useSetupStore((state) => state.saveToRecent);
 
 	const [appPhase, setAppPhase] = useState<AppPhase>('setup');
 	const [curtain, setCurtain] = useState(false);
@@ -69,6 +79,10 @@ export default function App() {
 			alert('Add at least one photo to the pool before starting presentation.');
 			return;
 		}
+		const saveResult = saveToRecent();
+		if (!continueWithoutRecentSave(saveResult)) {
+			return;
+		}
 		void resumeAudioContext();
 		setCurtain(true);
 		window.setTimeout(() => {
@@ -110,7 +124,11 @@ export default function App() {
 		) {
 			return;
 		}
-		resetPresentation();
+		const saveResult = saveToRecent();
+		if (!continueWithoutRecentSave(saveResult)) {
+			return;
+		}
+		resetPresentation({ markUnsaved: saveResult !== 'saved' });
 		stopAllSounds();
 		setIntroActive(false);
 		setAppPhase('setup');

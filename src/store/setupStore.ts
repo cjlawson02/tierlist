@@ -1,21 +1,34 @@
 import { create } from 'zustand';
+import { sanitizeRecentBundleDocument, toBundle } from '../bundle';
 import {
-	bundleToSerialized,
-	confirmBundleSizeGate,
-	downloadBundle,
-	readBundleFile,
-	toBundle,
-} from '../bundle';
-import { PRESENTATION_TITLE, PRESENTATION_TIERS } from '../presentationConfig';
+	BUNDLE_SIZE,
+	PRESENTATION_TITLE,
+	PRESENTATION_TIERS,
+} from '../presentationConfig';
 import type {
 	DropTarget,
 	ImageItem,
-	SerializedTierList,
+	TierBundleV1,
 	TierListState,
 	TierRow,
 } from '../types';
 import { TIER_COLORS } from '../types';
+import {
+	type RecentTierlistEntry,
+	estimateRecentTierlistsPersistBytes,
+	RecentTierlistsQuotaError,
+	projectRecentTierlistsAfterUpsert,
+	useRecentTierlistsStore,
+} from './recentTierlistsStore';
 import { createStoreId, resetStoreIds } from './storeIds';
+
+export type SaveToRecentResult =
+	| 'saved'
+	| 'empty'
+	| 'too-large'
+	| 'quota-exceeded';
+
+const mbToBytes = (mb: number) => mb * 1024 * 1024;
 
 const createImage = (src: string): ImageItem => ({ id: createStoreId(), src });
 const createRow = (name: string, index: number): TierRow => ({
@@ -36,18 +49,20 @@ const createInitialState = (): TierListState => {
 	};
 };
 
-const deserializeTierList = (data: SerializedTierList): TierListState => {
+const loadFromDocument = (
+	document: TierBundleV1['document'],
+): TierListState => {
 	resetStoreIds();
 	return {
-		title: data.title,
-		rows: data.rows.map((row) => ({
+		title: document.title,
+		rows: document.rows.map((row) => ({
 			id: createStoreId(),
 			name: row.name,
 			color: row.color,
-			images: row.imgs.map(createImage),
+			images: row.images.map(createImage),
 		})),
-		untieredImages: (data.untiered ?? []).map(createImage),
-		vertical: false,
+		untieredImages: (document.untiered ?? []).map(createImage),
+		vertical: document.vertical,
 		unsavedChanges: false,
 	};
 };
@@ -59,6 +74,10 @@ const selectTierListState = (state: SetupStore): TierListState => ({
 	vertical: state.vertical,
 	unsavedChanges: state.unsavedChanges,
 });
+
+const countImages = (state: TierListState) =>
+	state.untieredImages.length +
+	state.rows.reduce((total, row) => total + row.images.length, 0);
 
 const withoutImage = (state: TierListState, imageId: string) => ({
 	rows: state.rows.map((row) => ({
@@ -108,18 +127,22 @@ const insertImage = (
 };
 
 type SetupStore = TierListState & {
+	recentId: string | null;
 	setTitle: (title: string) => void;
 	addImages: (srcs: string[]) => void;
 	deleteImage: (imageId: string) => void;
 	moveImage: (imageId: string, target: DropTarget, targetIndex: number) => void;
-	resetPresentation: () => void;
+	resetPresentation: (options?: { markUnsaved?: boolean }) => void;
 	loadDemo: (title: string, srcs: string[]) => void;
-	importFile: (file: File) => Promise<void>;
-	exportFile: (name: string) => Promise<number | null>;
+	loadRecentTierlist: (entry: RecentTierlistEntry) => void;
+	saveToRecent: () => SaveToRecentResult;
+	startNewTierlist: () => void;
+	clearRecentId: () => void;
 };
 
 export const useSetupStore = create<SetupStore>((set, get) => ({
 	...createInitialState(),
+	recentId: null,
 	setTitle: (title) => {
 		set({ title, unsavedChanges: true });
 	},
@@ -160,7 +183,8 @@ export const useSetupStore = create<SetupStore>((set, get) => ({
 			};
 		});
 	},
-	resetPresentation: () => {
+	resetPresentation: (options) => {
+		const markUnsaved = options?.markUnsaved ?? true;
 		set((state) => {
 			const tiered = state.rows.flatMap((row) => row.images);
 			const poolIds = new Set(state.untieredImages.map((img) => img.id));
@@ -170,7 +194,7 @@ export const useSetupStore = create<SetupStore>((set, get) => ({
 					...state.untieredImages,
 					...tiered.filter((img) => !poolIds.has(img.id)),
 				],
-				unsavedChanges: true,
+				unsavedChanges: markUnsaved,
 			};
 		});
 	},
@@ -182,35 +206,81 @@ export const useSetupStore = create<SetupStore>((set, get) => ({
 			untieredImages: srcs.map(createImage),
 			vertical: false,
 			unsavedChanges: true,
+			recentId: null,
 		});
 	},
-	importFile: async (file) => {
+	loadRecentTierlist: (entry) => {
 		if (
 			get().unsavedChanges &&
 			!confirm('Replace current Tier List? Unsaved changes will be lost.')
 		) {
-			throw new Error('Import cancelled');
+			throw new Error('Load cancelled');
 		}
-		const bundle = await readBundleFile(file);
-		const loaded = deserializeTierList(bundleToSerialized(bundle));
-		set({ ...loaded, vertical: bundle.document.vertical });
+		const document = sanitizeRecentBundleDocument(entry.document);
+		set({ ...loadFromDocument(document), recentId: entry.id });
 	},
-	exportFile: async (name) => {
-		if (!name) {
-			return null;
+	saveToRecent: () => {
+		const state = selectTierListState(get());
+		const imageCount = countImages(state);
+		if (imageCount === 0) {
+			return 'empty';
 		}
-		const bundle = toBundle(selectTierListState(get()));
-		const bytes = bundle.meta?.approxBytes ?? 0;
+		const bundle = toBundle(state);
+		const approxBytes = bundle.meta?.approxBytes;
+		if (approxBytes === undefined) {
+			return 'too-large';
+		}
+		if (approxBytes > mbToBytes(BUNDLE_SIZE.maxEntryMb)) {
+			return 'too-large';
+		}
+
+		const recentId = get().recentId;
+		const savedAt = new Date().toISOString();
+		const candidate: RecentTierlistEntry = {
+			id: recentId ?? createStoreId(),
+			title: state.title,
+			savedAt,
+			imageCount,
+			document: bundle.document,
+		};
+		const projectedEntries = projectRecentTierlistsAfterUpsert(
+			useRecentTierlistsStore.getState().entries,
+			candidate,
+		);
+		if (
+			estimateRecentTierlistsPersistBytes(projectedEntries) >
+			mbToBytes(BUNDLE_SIZE.maxPersistMb)
+		) {
+			return 'too-large';
+		}
+
 		try {
-			confirmBundleSizeGate(bytes, 'export');
+			const id = useRecentTierlistsStore.getState().upsert({
+				id: recentId ?? undefined,
+				title: candidate.title,
+				savedAt,
+				imageCount,
+				document: candidate.document,
+			});
+			set({ recentId: id, unsavedChanges: false });
+			return 'saved';
 		} catch (err) {
-			if (err instanceof Error && err.message === 'Export cancelled') {
-				return null;
+			if (err instanceof RecentTierlistsQuotaError) {
+				return 'quota-exceeded';
 			}
 			throw err;
 		}
-		await downloadBundle(bundle, name);
-		set({ unsavedChanges: false });
-		return bytes;
+	},
+	startNewTierlist: () => {
+		if (
+			get().unsavedChanges &&
+			!confirm('Start a new Tier List? Unsaved changes will be lost.')
+		) {
+			return;
+		}
+		set({ ...createInitialState(), recentId: null });
+	},
+	clearRecentId: () => {
+		set({ recentId: null });
 	},
 }));

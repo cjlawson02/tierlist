@@ -3,6 +3,7 @@ import EditableTitle from '../components/EditableTitle';
 import ImagePool from '../components/ImagePool';
 import Spotlight from '../components/Spotlight';
 import SetupToolbar from '../components/setup/SetupToolbar';
+import RecentTierlistsPanel from '../components/setup/RecentTierlistsPanel';
 import InspirationPanel from '../components/setup/InspirationPanel';
 import type { InspirationSource } from '../integrations/inspiration';
 import { playSpotlightOpen, resumeAudioContext } from '../effects/sounds';
@@ -86,6 +87,7 @@ export default function SetupView({
 
 			<main className="main-content setup-main">
 				<InspirationPanel onStartDemo={onStartInspirationDemo} />
+				<RecentTierlistsPanel onToast={setToast} />
 				<section className="setup-panel" aria-label="Photos to rank">
 					<SetupToolbar
 						onToast={setToast}

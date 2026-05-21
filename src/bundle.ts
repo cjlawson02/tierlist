@@ -1,8 +1,9 @@
-import { BUNDLE_SIZE, BUNDLE_VERSION } from './presentationConfig';
+import { BUNDLE_VERSION } from './presentationConfig';
 import {
 	defaultTierColor,
 	sanitizeColor,
 	sanitizeName,
+	sanitizeRecentStringArray,
 	sanitizeStringArray,
 } from './sanitize';
 import type { SerializedTierList, TierBundleV1, TierListState } from './types';
@@ -83,6 +84,24 @@ function sanitizeBundleDocument(
 		untiered:
 			doc.untiered != null
 				? sanitizeStringArray(doc.untiered, 'untiered images')
+				: undefined,
+	};
+}
+
+export function sanitizeRecentBundleDocument(
+	doc: TierBundleV1['document'],
+): TierBundleV1['document'] {
+	return {
+		title: sanitizeName(doc.title, 'My Tier List'),
+		vertical: typeof doc.vertical === 'boolean' ? doc.vertical : false,
+		rows: doc.rows.map((row, index) => ({
+			name: sanitizeName(row.name, `Tier ${String(index + 1)}`),
+			color: sanitizeColor(row.color, defaultTierColor(index)),
+			images: sanitizeRecentStringArray(row.images, `row "${row.name}"`),
+		})),
+		untiered:
+			doc.untiered != null
+				? sanitizeRecentStringArray(doc.untiered, 'untiered images')
 				: undefined,
 	};
 }
@@ -191,124 +210,6 @@ export function formatBytes(bytes: number): string {
 		return `${(bytes / 1024).toFixed(1)} KB`;
 	}
 	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-export function getSizeGateMessage(
-	bytes: number,
-): 'silent' | 'info' | 'confirm' | 'strong' | 'block' {
-	const mb = bytes / (1024 * 1024);
-	if (mb >= BUNDLE_SIZE.blockImportMb) {
-		return 'block';
-	}
-	if (mb >= BUNDLE_SIZE.strongWarnMb) {
-		return 'strong';
-	}
-	if (mb >= BUNDLE_SIZE.confirmMb) {
-		return 'confirm';
-	}
-	if (mb >= BUNDLE_SIZE.infoMb) {
-		return 'info';
-	}
-	return 'silent';
-}
-
-function confirmSizeGate(
-	gate: ReturnType<typeof getSizeGateMessage>,
-	bytes: number,
-	action: 'import' | 'export',
-): void {
-	if (gate === 'block') {
-		throw new Error(
-			`File is too large (${formatBytes(bytes)}). Maximum recommended size is ${String(BUNDLE_SIZE.blockImportMb)} MB.`,
-		);
-	}
-	if (gate === 'info') {
-		if (
-			!confirm(
-				`This file is ${formatBytes(bytes)}. Continue ${action === 'import' ? 'importing' : 'exporting'}?`,
-			)
-		) {
-			throw new Error(`${action === 'import' ? 'Import' : 'Export'} cancelled`);
-		}
-		return;
-	}
-	if (gate === 'strong' || gate === 'confirm') {
-		const msg =
-			gate === 'strong'
-				? action === 'import'
-					? `This file is ${formatBytes(bytes)}. Loading may take a while and use significant memory. Continue?`
-					: `File is ${formatBytes(bytes)}. Export may be slow. Continue?`
-				: `This file is ${formatBytes(bytes)}. Continue ${action === 'import' ? 'importing' : 'exporting'}?`;
-		if (!confirm(msg)) {
-			throw new Error(`${action === 'import' ? 'Import' : 'Export'} cancelled`);
-		}
-	}
-}
-
-export async function downloadBundle(
-	bundle: TierBundleV1,
-	suggestedName: string,
-): Promise<void> {
-	const json = JSON.stringify(bundle, null, 2);
-	const blob = new Blob([json], { type: 'application/json' });
-	const filename = suggestedName.endsWith('.json')
-		? suggestedName
-		: `${suggestedName}.tierlist.json`;
-
-	if ('showSaveFilePicker' in window) {
-		try {
-			const handle = await (
-				window as Window & {
-					showSaveFilePicker: (opts: object) => Promise<FileSystemFileHandle>;
-				}
-			).showSaveFilePicker({
-				suggestedName: filename,
-				types: [
-					{
-						description: 'Tier List',
-						accept: { 'application/json': ['.json', '.tierlist.json'] },
-					},
-				],
-			});
-			const writable = await handle.createWritable();
-			await writable.write(blob);
-			await writable.close();
-			return;
-		} catch (err) {
-			if ((err as DOMException).name === 'AbortError') {
-				return;
-			}
-		}
-	}
-
-	const url = URL.createObjectURL(blob);
-	const anchor = document.createElement('a');
-	anchor.href = url;
-	anchor.download = filename;
-	anchor.hidden = true;
-	document.body.appendChild(anchor);
-	anchor.click();
-	anchor.remove();
-	URL.revokeObjectURL(url);
-}
-
-export function confirmBundleSizeGate(
-	bytes: number,
-	action: 'import' | 'export',
-): void {
-	confirmSizeGate(getSizeGateMessage(bytes), bytes, action);
-}
-
-export async function readBundleFile(file: File): Promise<TierBundleV1> {
-	confirmBundleSizeGate(file.size, 'import');
-	const text = await file.text();
-	let parsed: unknown;
-	try {
-		parsed = JSON.parse(text);
-	} catch {
-		throw new Error('Not a valid Tier List file.');
-	}
-	return normalizeToBundle(parsed);
 }
 
 export { normalizeToBundle };

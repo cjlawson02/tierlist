@@ -69,5 +69,54 @@ describe('App', () => {
 		expect(
 			await screen.findByRole('button', { name: 'Start presentation' }),
 		).toBeInTheDocument();
+		expect(getSetupStoreState().unsavedChanges).toBe(false);
+	});
+
+	it('aborts exit when recent save is too large and the user declines', async () => {
+		mockAlert();
+		const confirm = mockConfirm(false);
+		getSetupStoreState().addImages([DATA_IMAGE_PNG]);
+		vi.spyOn(getSetupStoreState(), 'saveToRecent')
+			.mockReturnValueOnce('saved')
+			.mockReturnValueOnce('too-large');
+
+		const { user } = renderWithProviders(<App />, {
+			userEvent: { advanceTimers: vi.advanceTimersByTime },
+		});
+		await user.click(
+			screen.getByRole('button', { name: 'Start presentation' }),
+		);
+		await vi.advanceTimersByTimeAsync(500);
+		await user.click(
+			await screen.findByRole('button', { name: 'Back to setup' }),
+		);
+
+		expect(confirm).toHaveBeenCalledWith(
+			'This tier list is too large to save locally. Continue without saving to recent lists?',
+		);
+		expect(
+			await screen.findByRole('button', { name: 'Back to setup' }),
+		).toBeInTheDocument();
+	});
+
+	it('prompts before starting when recent save is too large', async () => {
+		mockAlert();
+		const confirm = mockConfirm(false);
+		getSetupStoreState().addImages([DATA_IMAGE_PNG]);
+		vi.spyOn(getSetupStoreState(), 'saveToRecent').mockReturnValue('too-large');
+
+		const { user } = renderWithProviders(<App />, {
+			userEvent: { advanceTimers: vi.advanceTimersByTime },
+		});
+		await user.click(
+			screen.getByRole('button', { name: 'Start presentation' }),
+		);
+
+		expect(confirm).toHaveBeenCalledWith(
+			'This tier list is too large to save locally. Continue without saving to recent lists?',
+		);
+		expect(
+			screen.getByRole('button', { name: 'Start presentation' }),
+		).toBeInTheDocument();
 	});
 });

@@ -26,6 +26,24 @@ export function sanitizeImageSrc(src: unknown): string | null {
 	return src;
 }
 
+export function sanitizeRecentImageSrc(src: unknown): string | null {
+	if (typeof src !== 'string' || src.length === 0) {
+		return null;
+	}
+	if (DATA_IMAGE.test(src)) {
+		return src;
+	}
+	try {
+		const url = new URL(src);
+		if (url.protocol === 'https:') {
+			return src;
+		}
+	} catch {
+		return null;
+	}
+	return null;
+}
+
 export function sanitizeName(name: unknown, fallback: string): string {
 	if (typeof name !== 'string') {
 		return fallback.slice(0, MAX_NAME_LEN);
@@ -48,6 +66,26 @@ export function sanitizeStringArray(values: unknown, label: string): string[] {
 		if (!src) {
 			throw new Error(
 				`Invalid image in ${label}. Only embedded data:image URLs are supported.`,
+			);
+		}
+		result.push(src);
+	}
+	return result;
+}
+
+export function sanitizeRecentStringArray(
+	values: unknown,
+	label: string,
+): string[] {
+	if (!Array.isArray(values)) {
+		throw new Error(`Invalid ${label}.`);
+	}
+	const result: string[] = [];
+	for (const value of values) {
+		const src = sanitizeRecentImageSrc(value);
+		if (!src) {
+			throw new Error(
+				`Invalid image in ${label}. Only data:image or https URLs are supported.`,
 			);
 		}
 		result.push(src);
