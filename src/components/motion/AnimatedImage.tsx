@@ -7,7 +7,6 @@ interface AnimatedImageProps {
 	onImageClick?: () => void;
 	justLanded?: boolean;
 	landedSad?: boolean;
-	highlightNext?: boolean;
 	children?: React.ReactNode;
 }
 
@@ -17,7 +16,6 @@ export default function AnimatedImage({
 	onImageClick,
 	justLanded,
 	landedSad,
-	highlightNext,
 	children,
 }: AnimatedImageProps) {
 	const hiddenInSpotlight = spotlightImageId === image.id;
@@ -27,24 +25,20 @@ export default function AnimatedImage({
 			<motion.img
 				src={image.src}
 				alt=""
-				className={`tier-image${highlightNext ? ' tier-image--next' : ''}${hiddenInSpotlight ? ' tier-image--spotlight-hidden' : ''}`}
+				className={`tier-image${hiddenInSpotlight ? ' tier-image--spotlight-hidden' : ''}`}
 				animate={
 					justLanded && landedSad
 						? { scale: [1, 0.92, 0.96], rotate: [0, 1, 0], y: [0, 4, 0] }
 						: justLanded
 							? { scale: [0.88, 1.08, 1], rotate: [0, -2, 0] }
-							: highlightNext
-								? { scale: [1, 1.04, 1] }
-								: { scale: 1, rotate: 0, y: 0 }
+							: { scale: 1, rotate: 0, y: 0 }
 				}
 				transition={
 					justLanded && landedSad
 						? { duration: 0.55, ease: [0.55, 0.06, 0.68, 0.2] }
 						: justLanded
 							? { duration: 0.45, ease: [0.22, 1, 0.36, 1] }
-							: highlightNext
-								? { duration: 2.2, repeat: Infinity, ease: 'easeInOut' }
-								: { type: 'spring', stiffness: 380, damping: 36 }
+							: { type: 'spring', stiffness: 380, damping: 36 }
 				}
 			/>
 		</motion.div>
@@ -59,7 +53,7 @@ export default function AnimatedImage({
 			{onImageClick ? (
 				<button
 					type="button"
-					className={`tier-image-btn${highlightNext ? ' tier-image-btn--next' : ''}`}
+					className="tier-image-btn"
 					onClick={onImageClick}
 					aria-label="View image"
 				>

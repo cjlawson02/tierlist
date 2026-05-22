@@ -7,7 +7,6 @@ interface ImageListProps {
 	spotlightImageId?: string | null;
 	landedImageId?: string | null;
 	landedSad?: boolean;
-	highlightFirst?: boolean;
 	onImageClick?: (imageId: string) => void;
 	onDelete?: (imageId: string) => void;
 }
@@ -17,20 +16,18 @@ export default function ImageList({
 	spotlightImageId,
 	landedImageId,
 	landedSad,
-	highlightFirst,
 	onImageClick,
 	onDelete,
 }: ImageListProps) {
 	return (
 		<>
-			{images.map((image, index) => (
+			{images.map((image) => (
 				<span key={image.id} className="item">
 					<AnimatedImage
 						image={image}
 						spotlightImageId={spotlightImageId}
 						justLanded={landedImageId === image.id}
 						landedSad={landedSad && landedImageId === image.id}
-						highlightNext={highlightFirst && index === 0 && !spotlightImageId}
 						onImageClick={
 							onImageClick
 								? () => {

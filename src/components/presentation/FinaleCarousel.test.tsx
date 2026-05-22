@@ -31,7 +31,12 @@ describe('FinaleCarousel', () => {
 	it('advances slides and completes automatically', async () => {
 		const onComplete = vi.fn();
 		renderWithProviders(
-			<FinaleCarousel active rows={finaleRows} onComplete={onComplete} />,
+			<FinaleCarousel
+				active
+				title="Best Tier List"
+				rows={finaleRows}
+				onComplete={onComplete}
+			/>,
 			{ userEvent: { advanceTimers: vi.advanceTimersByTime } },
 		);
 
@@ -50,6 +55,7 @@ describe('FinaleCarousel', () => {
 		const { user } = renderWithProviders(
 			<FinaleCarousel
 				active
+				title="Best Tier List"
 				rows={finaleRows.slice(0, 1)}
 				onComplete={onComplete}
 			/>,
@@ -61,22 +67,48 @@ describe('FinaleCarousel', () => {
 		expect(onComplete).toHaveBeenCalledTimes(1);
 	});
 
-	it('finishes when Continue is clicked', async () => {
-		const onComplete = vi.fn();
-		const { user } = renderWithProviders(
-			<FinaleCarousel active rows={finaleRows} onComplete={onComplete} />,
+	it('centers up to three slides without embla', async () => {
+		renderWithProviders(
+			<FinaleCarousel
+				active
+				title="Best Tier List"
+				rows={finaleRows}
+				onComplete={vi.fn()}
+			/>,
 			{ userEvent: { advanceTimers: vi.advanceTimersByTime } },
 		);
 
 		await screen.findByRole('dialog', { name: /Finale carousel/i });
-		await user.click(screen.getByRole('button', { name: 'Continue' }));
+		expect(document.querySelector('.elite-slideshow__lane--static')).toBeTruthy();
+		expect(document.querySelector('.elite-slideshow__viewport')).toBeNull();
+	});
+
+	it('finishes when Continue is clicked', async () => {
+		const onComplete = vi.fn();
+		const { user } = renderWithProviders(
+			<FinaleCarousel
+				active
+				title="Best Tier List"
+				rows={finaleRows}
+				onComplete={onComplete}
+			/>,
+			{ userEvent: { advanceTimers: vi.advanceTimersByTime } },
+		);
+
+		await screen.findByRole('dialog', { name: /Finale carousel/i });
+		await user.click(screen.getByRole('button', { name: 'Show me my list' }));
 		expect(onComplete).toHaveBeenCalledTimes(1);
 	});
 
 	it('keeps scrolling long tracks without auto-completing', async () => {
 		const onComplete = vi.fn();
 		renderWithProviders(
-			<FinaleCarousel active rows={longFinaleRows} onComplete={onComplete} />,
+			<FinaleCarousel
+				active
+				title="Best Tier List"
+				rows={longFinaleRows}
+				onComplete={onComplete}
+			/>,
 			{ userEvent: { advanceTimers: vi.advanceTimersByTime } },
 		);
 
@@ -86,10 +118,33 @@ describe('FinaleCarousel', () => {
 		expect(onComplete).not.toHaveBeenCalled();
 	});
 
+	it('renders a draggable embla viewport without duplicating slides', async () => {
+		renderWithProviders(
+			<FinaleCarousel
+				active
+				title="Best Tier List"
+				rows={longFinaleRows}
+				onComplete={vi.fn()}
+			/>,
+			{ userEvent: { advanceTimers: vi.advanceTimersByTime } },
+		);
+
+		await screen.findByRole('dialog', { name: /Finale carousel/i });
+		expect(document.querySelector('.elite-slideshow__viewport')).toBeTruthy();
+		expect(
+			document.querySelectorAll('[data-testid^="finale-slide-long-img-"]'),
+		).toHaveLength(5);
+	});
+
 	it('does not close on keydown from focused input', async () => {
 		const onComplete = vi.fn();
 		const { user } = renderWithProviders(
-			<FinaleCarousel active rows={finaleRows} onComplete={onComplete} />,
+			<FinaleCarousel
+				active
+				title="Best Tier List"
+				rows={finaleRows}
+				onComplete={onComplete}
+			/>,
 			{ userEvent: { advanceTimers: vi.advanceTimersByTime } },
 		);
 
@@ -105,7 +160,12 @@ describe('FinaleCarousel', () => {
 	it('shows a fallback when an image fails to load', async () => {
 		const onComplete = vi.fn();
 		renderWithProviders(
-			<FinaleCarousel active rows={finaleRows} onComplete={onComplete} />,
+			<FinaleCarousel
+				active
+				title="Best Tier List"
+				rows={finaleRows}
+				onComplete={onComplete}
+			/>,
 			{ userEvent: { advanceTimers: vi.advanceTimersByTime } },
 		);
 
@@ -119,7 +179,12 @@ describe('FinaleCarousel', () => {
 
 	it('returns null when inactive', () => {
 		const { container } = renderWithProviders(
-			<FinaleCarousel active={false} rows={finaleRows} onComplete={vi.fn()} />,
+			<FinaleCarousel
+				active={false}
+				title="Best Tier List"
+				rows={finaleRows}
+				onComplete={vi.fn()}
+			/>,
 		);
 
 		expect(container).toBeEmptyDOMElement();

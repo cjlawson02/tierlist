@@ -8,23 +8,18 @@ export default function ImagePool({
 	onImageClick,
 	onDelete,
 	layoutScroll,
-	highlightFirst,
-	introActive,
 }: {
 	images: ImageItem[];
 	spotlightImageId?: string | null;
 	onImageClick?: (imageId: string) => void;
 	onDelete?: (imageId: string) => void;
 	layoutScroll?: boolean;
-	highlightFirst?: boolean;
-	introActive?: boolean;
 }) {
-	const className = `images pool-panel${introActive ? ' pool-panel--intro' : ''}`;
+	const className = 'images pool-panel';
 	const content = (
 		<ImageList
 			images={images}
 			spotlightImageId={spotlightImageId}
-			highlightFirst={highlightFirst}
 			onImageClick={onImageClick}
 			onDelete={onDelete}
 		/>

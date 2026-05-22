@@ -34,6 +34,13 @@ describe('SetupView', () => {
 		expect(
 			await screen.findByRole('dialog', { name: /Image preview/i }),
 		).toBeInTheDocument();
+
+		await user.click(screen.getByRole('button', { name: 'Close preview' }));
+		await waitFor(() => {
+			expect(
+				screen.queryByRole('dialog', { name: /Image preview/i }),
+			).not.toBeInTheDocument();
+		});
 	});
 
 	it('adds pasted images and shows a toast', async () => {

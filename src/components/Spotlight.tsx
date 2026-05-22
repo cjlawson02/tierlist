@@ -7,6 +7,7 @@ import {
 	type CSSProperties,
 } from 'react';
 import { createPortal } from 'react-dom';
+import PresentationQueue from './presentation/PresentationQueue';
 import type { ImageItem, TierRow } from '../types';
 
 interface SpotlightProps {
@@ -16,6 +17,12 @@ interface SpotlightProps {
 	mode?: 'assign' | 'preview';
 	photoLabel?: string | null;
 	rows?: TierRow[];
+	queueImages?: ImageItem[];
+	totalImages?: number;
+	spotlightImageId?: string | null;
+	queuePaused?: boolean;
+	onResumeQueue?: () => void;
+	onSelectQueueImage?: (imageId: string) => void;
 	onAssignTier?: (
 		rowId: string,
 		rowName: string,
@@ -30,6 +37,12 @@ export default function Spotlight({
 	mode = 'assign',
 	photoLabel,
 	rows = [],
+	queueImages = [],
+	totalImages = 0,
+	spotlightImageId = null,
+	queuePaused = false,
+	onResumeQueue,
+	onSelectQueueImage,
 	onAssignTier,
 }: SpotlightProps) {
 	const dialogRef = useRef<HTMLDivElement>(null);
@@ -132,13 +145,13 @@ export default function Spotlight({
 			{displayImage && isVisible && (
 				<motion.div
 					key={displayImage.id}
-					className={`spotlight-backdrop${!isPreview ? ' spotlight-backdrop--assign' : ''} spotlight-backdrop--broadcast`}
+					className={`spotlight-backdrop${isPreview ? ' spotlight-backdrop--preview' : ' spotlight-backdrop--assign'} spotlight-backdrop--broadcast`}
 					layoutRoot
 					role="dialog"
 					aria-modal="true"
 					aria-label={
 						isPreview
-							? 'Image preview — press Escape to close'
+							? 'Image preview — tap outside or press Escape to close'
 							: photoLabel
 								? `${photoLabel} — assign a tier or press Escape to pause`
 								: 'Image spotlight — assign a tier or press Escape to pause'
@@ -149,16 +162,37 @@ export default function Spotlight({
 					animate={{ opacity: 1 }}
 					exit={{ opacity: 0 }}
 					transition={{ duration: 0.22 }}
-					onClick={requestClose}
+					onClick={isPreview ? undefined : requestClose}
 				>
+					{isPreview && (
+						<button
+							type="button"
+							className="spotlight-backdrop__hit"
+							aria-label="Close preview"
+							onClick={requestClose}
+						/>
+					)}
 					<div
-						className="spotlight-panel"
-						onClick={(event) => {
-							event.stopPropagation();
-						}}
+						className={`spotlight-panel${isPreview ? '' : ' spotlight-panel--assign'}`}
+						onClick={
+							isPreview
+								? undefined
+								: (event) => {
+										event.stopPropagation();
+									}
+						}
 					>
+						{!isPreview && totalImages > 0 && onResumeQueue && onSelectQueueImage && (
+							<PresentationQueue
+								images={queueImages}
+								totalImages={totalImages}
+								spotlightImageId={spotlightImageId}
+								queuePaused={queuePaused}
+								onResume={onResumeQueue}
+								onSelectImage={onSelectQueueImage}
+							/>
+						)}
 						<div className="spotlight-image-wrap">
-							<div className="spotlight-vignette" aria-hidden="true" />
 							<motion.div
 								className="spotlight-layout-frame spotlight-layout-frame--hero"
 								initial={{ opacity: 0, scale: 0.94 }}
@@ -175,42 +209,44 @@ export default function Spotlight({
 							</motion.div>
 						</div>
 						{!isPreview && (
-							<div
-								className="spotlight-tier-bar"
-								style={{ '--tier-count': rows.length } as CSSProperties}
-							>
-								<div className="spotlight-tier-bar__track">
-									{rows.map((row, index) => (
-										<span
-											key={row.id}
-											className="spotlight-tier-chip-wrap"
-											style={{
-												animationDelay: `${String(80 + index * 45)}ms`,
-											}}
-										>
-											<button
-												type="button"
-												className="spotlight-tier-chip"
-												style={
-													{
-														backgroundColor: row.color,
-														borderColor: row.color,
-														color: 'var(--stage-bg)',
-														'--chip-glow': row.color,
-													} as CSSProperties
-												}
-												onClick={() => {
-													assign(row.id, row.name, row.color);
+							<>
+								<div
+									className="spotlight-tier-bar"
+									style={{ '--tier-count': rows.length } as CSSProperties}
+								>
+									<div className="spotlight-tier-bar__track">
+										{rows.map((row, index) => (
+											<span
+												key={row.id}
+												className="spotlight-tier-chip-wrap"
+												style={{
+													animationDelay: `${String(80 + index * 45)}ms`,
 												}}
 											>
-												<span className="spotlight-tier-chip-face">
-													{row.name}
-												</span>
-											</button>
-										</span>
-									))}
+												<button
+													type="button"
+													className="spotlight-tier-chip"
+													style={
+														{
+															backgroundColor: row.color,
+															borderColor: row.color,
+															color: 'var(--stage-bg)',
+															'--chip-glow': row.color,
+														} as CSSProperties
+													}
+													onClick={() => {
+														assign(row.id, row.name, row.color);
+													}}
+												>
+													<span className="spotlight-tier-chip-face">
+														{row.name}
+													</span>
+												</button>
+											</span>
+										))}
+									</div>
 								</div>
-							</div>
+							</>
 						)}
 					</div>
 				</motion.div>

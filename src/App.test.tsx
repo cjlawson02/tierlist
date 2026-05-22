@@ -14,22 +14,14 @@ describe('App', () => {
 		vi.useRealTimers();
 	});
 
-	it('blocks presentation when the pool is empty', async () => {
-		const alert = mockAlert();
-		const { user } = renderWithProviders(<App />, {
+	it('disables start presentation when the pool is empty', () => {
+		renderWithProviders(<App />, {
 			userEvent: { advanceTimers: vi.advanceTimersByTime },
 		});
 
-		await user.click(
-			screen.getByRole('button', { name: 'Start presentation' }),
-		);
-
-		expect(alert).toHaveBeenCalledWith(
-			'Add at least one photo to the pool before starting presentation.',
-		);
 		expect(
-			screen.getByRole('button', { name: 'Add photos' }),
-		).toBeInTheDocument();
+			screen.getByRole('button', { name: 'Start presentation' }),
+		).toBeDisabled();
 	});
 
 	it('enters presentation when photos exist in the pool', async () => {
@@ -45,11 +37,11 @@ describe('App', () => {
 		await vi.advanceTimersByTimeAsync(500);
 
 		expect(
-			await screen.findByRole('button', { name: 'Back to setup' }),
+			await screen.findByRole('button', { name: 'Back to photos' }),
 		).toBeInTheDocument();
 	});
 
-	it('returns to setup after confirming exit from presentation', async () => {
+	it('returns to photos after confirming exit from presentation', async () => {
 		mockAlert();
 		mockConfirm(true);
 		getSetupStoreState().addImages([DATA_IMAGE_PNG]);
@@ -62,7 +54,7 @@ describe('App', () => {
 		);
 		await vi.advanceTimersByTimeAsync(500);
 		await user.click(
-			await screen.findByRole('button', { name: 'Back to setup' }),
+			await screen.findByRole('button', { name: 'Back to photos' }),
 		);
 		await vi.advanceTimersByTimeAsync(100);
 
@@ -70,53 +62,5 @@ describe('App', () => {
 			await screen.findByRole('button', { name: 'Start presentation' }),
 		).toBeInTheDocument();
 		expect(getSetupStoreState().unsavedChanges).toBe(false);
-	});
-
-	it('aborts exit when recent save is too large and the user declines', async () => {
-		mockAlert();
-		const confirm = mockConfirm(false);
-		getSetupStoreState().addImages([DATA_IMAGE_PNG]);
-		vi.spyOn(getSetupStoreState(), 'saveToRecent')
-			.mockReturnValueOnce('saved')
-			.mockReturnValueOnce('too-large');
-
-		const { user } = renderWithProviders(<App />, {
-			userEvent: { advanceTimers: vi.advanceTimersByTime },
-		});
-		await user.click(
-			screen.getByRole('button', { name: 'Start presentation' }),
-		);
-		await vi.advanceTimersByTimeAsync(500);
-		await user.click(
-			await screen.findByRole('button', { name: 'Back to setup' }),
-		);
-
-		expect(confirm).toHaveBeenCalledWith(
-			'This tier list is too large to save locally. Continue without saving to recent lists?',
-		);
-		expect(
-			await screen.findByRole('button', { name: 'Back to setup' }),
-		).toBeInTheDocument();
-	});
-
-	it('prompts before starting when recent save is too large', async () => {
-		mockAlert();
-		const confirm = mockConfirm(false);
-		getSetupStoreState().addImages([DATA_IMAGE_PNG]);
-		vi.spyOn(getSetupStoreState(), 'saveToRecent').mockReturnValue('too-large');
-
-		const { user } = renderWithProviders(<App />, {
-			userEvent: { advanceTimers: vi.advanceTimersByTime },
-		});
-		await user.click(
-			screen.getByRole('button', { name: 'Start presentation' }),
-		);
-
-		expect(confirm).toHaveBeenCalledWith(
-			'This tier list is too large to save locally. Continue without saving to recent lists?',
-		);
-		expect(
-			screen.getByRole('button', { name: 'Start presentation' }),
-		).toBeInTheDocument();
 	});
 });

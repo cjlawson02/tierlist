@@ -1,34 +1,13 @@
 import { create } from 'zustand';
-import { sanitizeRecentBundleDocument, toBundle } from '../bundle';
-import {
-	BUNDLE_SIZE,
-	PRESENTATION_TITLE,
-	PRESENTATION_TIERS,
-} from '../presentationConfig';
+import { PRESENTATION_TITLE, PRESENTATION_TIERS } from '../presentationConfig';
 import type {
 	DropTarget,
 	ImageItem,
-	TierBundleV1,
 	TierListState,
 	TierRow,
 } from '../types';
 import { TIER_COLORS } from '../types';
-import {
-	type RecentTierlistEntry,
-	estimateRecentTierlistsPersistBytes,
-	RecentTierlistsQuotaError,
-	projectRecentTierlistsAfterUpsert,
-	useRecentTierlistsStore,
-} from './recentTierlistsStore';
 import { createStoreId, resetStoreIds } from './storeIds';
-
-export type SaveToRecentResult =
-	| 'saved'
-	| 'empty'
-	| 'too-large'
-	| 'quota-exceeded';
-
-const mbToBytes = (mb: number) => mb * 1024 * 1024;
 
 const createImage = (src: string): ImageItem => ({ id: createStoreId(), src });
 const createRow = (name: string, index: number): TierRow => ({
@@ -48,36 +27,6 @@ const createInitialState = (): TierListState => {
 		unsavedChanges: false,
 	};
 };
-
-const loadFromDocument = (
-	document: TierBundleV1['document'],
-): TierListState => {
-	resetStoreIds();
-	return {
-		title: document.title,
-		rows: document.rows.map((row) => ({
-			id: createStoreId(),
-			name: row.name,
-			color: row.color,
-			images: row.images.map(createImage),
-		})),
-		untieredImages: (document.untiered ?? []).map(createImage),
-		vertical: document.vertical,
-		unsavedChanges: false,
-	};
-};
-
-const selectTierListState = (state: SetupStore): TierListState => ({
-	title: state.title,
-	rows: state.rows,
-	untieredImages: state.untieredImages,
-	vertical: state.vertical,
-	unsavedChanges: state.unsavedChanges,
-});
-
-const countImages = (state: TierListState) =>
-	state.untieredImages.length +
-	state.rows.reduce((total, row) => total + row.images.length, 0);
 
 const withoutImage = (state: TierListState, imageId: string) => ({
 	rows: state.rows.map((row) => ({
@@ -127,22 +76,16 @@ const insertImage = (
 };
 
 type SetupStore = TierListState & {
-	recentId: string | null;
 	setTitle: (title: string) => void;
 	addImages: (srcs: string[]) => void;
 	deleteImage: (imageId: string) => void;
 	moveImage: (imageId: string, target: DropTarget, targetIndex: number) => void;
 	resetPresentation: (options?: { markUnsaved?: boolean }) => void;
 	loadDemo: (title: string, srcs: string[]) => void;
-	loadRecentTierlist: (entry: RecentTierlistEntry) => void;
-	saveToRecent: () => SaveToRecentResult;
-	startNewTierlist: () => void;
-	clearRecentId: () => void;
 };
 
-export const useSetupStore = create<SetupStore>((set, get) => ({
+export const useSetupStore = create<SetupStore>((set) => ({
 	...createInitialState(),
-	recentId: null,
 	setTitle: (title) => {
 		set({ title, unsavedChanges: true });
 	},
@@ -206,81 +149,6 @@ export const useSetupStore = create<SetupStore>((set, get) => ({
 			untieredImages: srcs.map(createImage),
 			vertical: false,
 			unsavedChanges: true,
-			recentId: null,
 		});
-	},
-	loadRecentTierlist: (entry) => {
-		if (
-			get().unsavedChanges &&
-			!confirm('Replace current Tier List? Unsaved changes will be lost.')
-		) {
-			throw new Error('Load cancelled');
-		}
-		const document = sanitizeRecentBundleDocument(entry.document);
-		set({ ...loadFromDocument(document), recentId: entry.id });
-	},
-	saveToRecent: () => {
-		const state = selectTierListState(get());
-		const imageCount = countImages(state);
-		if (imageCount === 0) {
-			return 'empty';
-		}
-		const bundle = toBundle(state);
-		const approxBytes = bundle.meta?.approxBytes;
-		if (approxBytes === undefined) {
-			return 'too-large';
-		}
-		if (approxBytes > mbToBytes(BUNDLE_SIZE.maxEntryMb)) {
-			return 'too-large';
-		}
-
-		const recentId = get().recentId;
-		const savedAt = new Date().toISOString();
-		const candidate: RecentTierlistEntry = {
-			id: recentId ?? createStoreId(),
-			title: state.title,
-			savedAt,
-			imageCount,
-			document: bundle.document,
-		};
-		const projectedEntries = projectRecentTierlistsAfterUpsert(
-			useRecentTierlistsStore.getState().entries,
-			candidate,
-		);
-		if (
-			estimateRecentTierlistsPersistBytes(projectedEntries) >
-			mbToBytes(BUNDLE_SIZE.maxPersistMb)
-		) {
-			return 'too-large';
-		}
-
-		try {
-			const id = useRecentTierlistsStore.getState().upsert({
-				id: recentId ?? undefined,
-				title: candidate.title,
-				savedAt,
-				imageCount,
-				document: candidate.document,
-			});
-			set({ recentId: id, unsavedChanges: false });
-			return 'saved';
-		} catch (err) {
-			if (err instanceof RecentTierlistsQuotaError) {
-				return 'quota-exceeded';
-			}
-			throw err;
-		}
-	},
-	startNewTierlist: () => {
-		if (
-			get().unsavedChanges &&
-			!confirm('Start a new Tier List? Unsaved changes will be lost.')
-		) {
-			return;
-		}
-		set({ ...createInitialState(), recentId: null });
-	},
-	clearRecentId: () => {
-		set({ recentId: null });
 	},
 }));

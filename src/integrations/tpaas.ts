@@ -70,6 +70,16 @@ export async function fetchTpaasCatalog(): Promise<string[]> {
 	}
 }
 
+export function resolveTpaasAssetUrl(url: string): string {
+	if (!import.meta.env.DEV) {
+		return url;
+	}
+	return url.replace(
+		'https://assets.tpaas.chrislawson.dev',
+		'/tpaas-assets-proxy',
+	);
+}
+
 export async function pickTpaasImages(count: number): Promise<string[]> {
 	const catalog = await fetchTpaasCatalog();
 	if (catalog.length < count) {
@@ -77,5 +87,5 @@ export async function pickTpaasImages(count: number): Promise<string[]> {
 			`TPaaS only has ${String(catalog.length)} approved trolley problems`,
 		);
 	}
-	return shuffle(catalog).slice(0, count);
+	return shuffle(catalog).slice(0, count).map(resolveTpaasAssetUrl);
 }

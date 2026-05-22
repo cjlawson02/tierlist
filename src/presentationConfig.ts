@@ -27,18 +27,6 @@ export const QUEUE = {
 	pauseAfterAssignmentMs: 1000,
 } as const;
 
-export const BUNDLE_SIZE = {
-	maxEntryMb: 4,
-	maxPersistMb: 4,
-} as const;
-
-export const RECENT_TIERLISTS = {
-	maxEntries: 10,
-	ttlDays: 7,
-	storageKey: 'tiers-recent-tierlists',
-	storageVersion: 1,
-} as const;
-
 export const SOUND_MUTE_KEY = 'tiers-sound-muted';
 
 export type DisappointmentTone =

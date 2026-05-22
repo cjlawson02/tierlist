@@ -13,16 +13,6 @@ describe('ImagePool', () => {
 
 		const panel = screen.getByRole('region', { name: 'Photos' });
 		expect(panel).toBeInTheDocument();
-		expect(panel).not.toHaveClass('pool-panel--intro');
-	});
-
-	it('adds the intro class when introActive is true', () => {
-		renderWithProviders(
-			<ImagePool images={images} introActive onImageClick={() => undefined} />,
-		);
-
-		expect(screen.getByRole('region', { name: 'Photos' })).toHaveClass(
-			'pool-panel--intro',
-		);
+		expect(panel).toHaveClass('pool-panel');
 	});
 });

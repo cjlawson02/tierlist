@@ -6,6 +6,20 @@ import { DATA_IMAGE_PNG } from '../test/fixtures';
 const image = { id: 'img-1', src: DATA_IMAGE_PNG };
 
 describe('Spotlight', () => {
+	it('closes when the backdrop is clicked in preview mode', async () => {
+		const onRelease = vi.fn();
+		const { rerender, user } = renderWithProviders(
+			<Spotlight mode="preview" image={null} onRelease={onRelease} />,
+		);
+
+		rerender(<Spotlight mode="preview" image={image} onRelease={onRelease} />);
+
+		await user.click(
+			await screen.findByRole('button', { name: 'Close preview' }),
+		);
+		expect(onRelease).toHaveBeenCalled();
+	});
+
 	it('closes on Escape in preview mode', async () => {
 		const onRelease = vi.fn();
 		const { rerender, user } = renderWithProviders(

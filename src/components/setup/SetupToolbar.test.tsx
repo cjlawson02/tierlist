@@ -6,7 +6,18 @@ import { DATA_IMAGE_PNG } from '../../test/fixtures';
 import { getSetupStoreState } from '../../test/store';
 
 describe('SetupToolbar', () => {
+	it('disables start presentation until photos are added', () => {
+		renderWithProviders(
+			<SetupToolbar onToast={vi.fn()} onStartPresentation={vi.fn()} />,
+		);
+
+		expect(
+			screen.getByRole('button', { name: 'Start presentation' }),
+		).toBeDisabled();
+	});
+
 	it('starts presentation when the start button is clicked', async () => {
+		getSetupStoreState().addImages([DATA_IMAGE_PNG]);
 		const onStartPresentation = vi.fn();
 		const { user } = renderWithProviders(
 			<SetupToolbar

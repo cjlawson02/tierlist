@@ -61,6 +61,18 @@ class MockResizeObserver {
 
 vi.stubGlobal('ResizeObserver', MockResizeObserver);
 
+class MockIntersectionObserver {
+	observe = vi.fn();
+	unobserve = vi.fn();
+	disconnect = vi.fn();
+	takeRecords = vi.fn(() => []);
+	root = null;
+	rootMargin = '0px';
+	thresholds = [0];
+}
+
+vi.stubGlobal('IntersectionObserver', MockIntersectionObserver);
+
 afterEach(() => {
 	cleanup();
 	vi.restoreAllMocks();
@@ -68,6 +80,7 @@ afterEach(() => {
 	sessionStorage.clear();
 	vi.stubGlobal('AudioContext', MockAudioContext);
 	vi.stubGlobal('ResizeObserver', MockResizeObserver);
+	vi.stubGlobal('IntersectionObserver', MockIntersectionObserver);
 	Object.defineProperty(window, 'matchMedia', {
 		writable: true,
 		value: vi.fn().mockImplementation((query: string) => ({

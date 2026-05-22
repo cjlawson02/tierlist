@@ -5,8 +5,6 @@ import {
 	sanitizeColor,
 	sanitizeImageSrc,
 	sanitizeName,
-	sanitizeRecentImageSrc,
-	sanitizeRecentStringArray,
 	sanitizeStringArray,
 } from './sanitize';
 
@@ -22,20 +20,6 @@ describe('sanitizeImageSrc', () => {
 	it('rejects non-string values', () => {
 		expect(sanitizeImageSrc(null)).toBeNull();
 		expect(sanitizeImageSrc(42)).toBeNull();
-	});
-});
-
-describe('sanitizeRecentImageSrc', () => {
-	it('accepts data:image and https URLs', () => {
-		expect(sanitizeRecentImageSrc(DATA_IMAGE_PNG)).toBe(DATA_IMAGE_PNG);
-		expect(sanitizeRecentImageSrc('https://cataas.com/cat/demo')).toBe(
-			'https://cataas.com/cat/demo',
-		);
-	});
-
-	it('rejects javascript and http URLs', () => {
-		expect(sanitizeRecentImageSrc('javascript:alert(1)')).toBeNull();
-		expect(sanitizeRecentImageSrc('http://insecure.example/a.png')).toBeNull();
 	});
 });
 
@@ -92,17 +76,6 @@ describe('sanitizeStringArray', () => {
 		expect(() => sanitizeStringArray('nope', 'images')).toThrow(
 			'Invalid images.',
 		);
-	});
-});
-
-describe('sanitizeRecentStringArray', () => {
-	it('accepts https URLs for recent tier lists', () => {
-		expect(
-			sanitizeRecentStringArray(
-				['https://cataas.com/cat/demo', DATA_IMAGE_PNG],
-				'images',
-			),
-		).toEqual(['https://cataas.com/cat/demo', DATA_IMAGE_PNG]);
 	});
 });
 

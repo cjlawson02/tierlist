@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { parseGalleryAssetUrls, pickTpaasImages } from './tpaas';
+import { parseGalleryAssetUrls, pickTpaasImages, resolveTpaasAssetUrl } from './tpaas';
 
 describe('tpaas integration', () => {
 	it('parses unique asset URLs from gallery HTML', () => {
@@ -36,5 +36,13 @@ describe('tpaas integration', () => {
 		const images = await pickTpaasImages(5);
 		expect(images).toHaveLength(5);
 		expect(new Set(images).size).toBe(5);
+	});
+
+	it('rewrites asset URLs through the dev proxy', () => {
+		expect(
+			resolveTpaasAssetUrl(
+				'https://assets.tpaas.chrislawson.dev/approved/aaaa-bbbb.jpg',
+			),
+		).toBe('/tpaas-assets-proxy/approved/aaaa-bbbb.jpg');
 	});
 });

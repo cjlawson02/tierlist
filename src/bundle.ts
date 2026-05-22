@@ -3,7 +3,6 @@ import {
 	defaultTierColor,
 	sanitizeColor,
 	sanitizeName,
-	sanitizeRecentStringArray,
 	sanitizeStringArray,
 } from './sanitize';
 import type { SerializedTierList, TierBundleV1, TierListState } from './types';
@@ -84,24 +83,6 @@ function sanitizeBundleDocument(
 		untiered:
 			doc.untiered != null
 				? sanitizeStringArray(doc.untiered, 'untiered images')
-				: undefined,
-	};
-}
-
-export function sanitizeRecentBundleDocument(
-	doc: TierBundleV1['document'],
-): TierBundleV1['document'] {
-	return {
-		title: sanitizeName(doc.title, 'My Tier List'),
-		vertical: typeof doc.vertical === 'boolean' ? doc.vertical : false,
-		rows: doc.rows.map((row, index) => ({
-			name: sanitizeName(row.name, `Tier ${String(index + 1)}`),
-			color: sanitizeColor(row.color, defaultTierColor(index)),
-			images: sanitizeRecentStringArray(row.images, `row "${row.name}"`),
-		})),
-		untiered:
-			doc.untiered != null
-				? sanitizeRecentStringArray(doc.untiered, 'untiered images')
 				: undefined,
 	};
 }

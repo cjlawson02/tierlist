@@ -1,3 +1,5 @@
+import Autoplay from 'embla-carousel-autoplay';
+import useEmblaCarousel from 'embla-carousel-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { X } from 'lucide-react';
 import {
@@ -7,6 +9,8 @@ import {
 	useRef,
 	useState,
 	type CSSProperties,
+	type Dispatch,
+	type SetStateAction,
 } from 'react';
 import { createPortal } from 'react-dom';
 import IconButton from '../IconButton';
@@ -20,14 +24,16 @@ interface FinaleSlide {
 
 interface FinaleCarouselProps {
 	active: boolean;
+	title: string;
 	rows: TierRow[];
 	onComplete: () => void;
+	onSaveImage?: () => void;
+	saveImageBusy?: boolean;
 }
 
-const STEP_MS = 1700;
 const VISIBLE_CARDS = 3;
-const MIN_LOOP_MS = 16000;
 const BADGE_INSET_PX = 14;
+const AUTOPLAY_DELAY_MS = 1700;
 
 interface FinaleSlideCardProps {
 	slide: FinaleSlide;
@@ -92,54 +98,166 @@ function FinaleSlideCard({
 	}, [slide.image.src, syncBadgePosition]);
 
 	return (
-		<figure className="elite-slideshow__card">
-			<div className="elite-slideshow__media" ref={mediaRef}>
-				{failed ? (
-					<div
-						className="elite-slideshow__image-fallback"
-						role="img"
-						aria-label="Image unavailable"
-					>
-						Image unavailable
-					</div>
-				) : (
-					<img
-						src={slide.image.src}
-						alt=""
-						data-testid={`finale-slide-${slide.image.id}`}
-						className="elite-slideshow__image"
-						draggable={false}
-						onLoad={syncBadgePosition}
-						onError={onImageError}
-					/>
-				)}
-				<span
-					className="elite-slideshow__badge"
-					style={
-						{
-							backgroundColor: slide.tierColor,
-							color: 'var(--stage-bg)',
-							'--badge-glow': slide.tierColor,
-							...(badgePosition
-								? {
-										left: `${String(badgePosition.left)}px`,
-										bottom: `${String(badgePosition.bottom)}px`,
-									}
-								: {}),
-						} as CSSProperties
-					}
+		<div className="elite-slideshow__media" ref={mediaRef}>
+			{failed ? (
+				<div
+					className="elite-slideshow__image-fallback"
+					role="img"
+					aria-label="Image unavailable"
 				>
-					{slide.tierName}
-				</span>
+					Image unavailable
+				</div>
+			) : (
+				<img
+					src={slide.image.src}
+					alt=""
+					data-testid={`finale-slide-${slide.image.id}`}
+					className="elite-slideshow__image"
+					draggable={false}
+					onLoad={syncBadgePosition}
+					onError={onImageError}
+				/>
+			)}
+			<span
+				className="elite-slideshow__badge"
+				style={
+					{
+						backgroundColor: slide.tierColor,
+						color: 'var(--stage-bg)',
+						...(badgePosition
+							? {
+									left: `${String(badgePosition.left)}px`,
+									bottom: `${String(badgePosition.bottom)}px`,
+								}
+							: {}),
+					} as CSSProperties
+				}
+			>
+				{slide.tierName}
+			</span>
+		</div>
+	);
+}
+
+function markImageFailed(
+	imageId: string,
+	setFailedImageIds: Dispatch<SetStateAction<Set<string>>>,
+) {
+	setFailedImageIds((current) => {
+		if (current.has(imageId)) {
+			return current;
+		}
+		const next = new Set(current);
+		next.add(imageId);
+		return next;
+	});
+}
+
+interface FinaleCarouselLaneProps {
+	slides: FinaleSlide[];
+	failedImageIds: Set<string>;
+	onImageError: (imageId: string) => void;
+}
+
+function FinaleCarouselEmblaLane({
+	slides,
+	failedImageIds,
+	onImageError,
+	active,
+}: FinaleCarouselLaneProps & { active: boolean }) {
+	const autoplay = useRef(
+		Autoplay({
+			delay: AUTOPLAY_DELAY_MS,
+			stopOnInteraction: true,
+			stopOnMouseEnter: false,
+		}),
+	);
+	const [emblaRef, emblaApi] = useEmblaCarousel(
+		{
+			align: 'start',
+			loop: true,
+			dragFree: true,
+		},
+		[autoplay.current],
+	);
+
+	useEffect(() => {
+		if (!emblaApi) {
+			return;
+		}
+		if (!active) {
+			autoplay.current.stop();
+			return;
+		}
+		emblaApi.reInit({
+			align: 'start',
+			loop: true,
+			dragFree: true,
+		});
+		autoplay.current.reset();
+		autoplay.current.play();
+	}, [active, emblaApi]);
+
+	return (
+		<div
+			className="elite-slideshow__lane"
+			onClick={(event) => {
+				event.stopPropagation();
+			}}
+		>
+			<div className="elite-slideshow__viewport" ref={emblaRef}>
+				<motion.div className="elite-slideshow__track">
+					{slides.map((slide) => (
+						<FinaleSlideCard
+							key={slide.image.id}
+							slide={slide}
+							failed={failedImageIds.has(slide.image.id)}
+							onImageError={() => {
+								onImageError(slide.image.id);
+							}}
+						/>
+					))}
+				</motion.div>
 			</div>
-		</figure>
+		</div>
+	);
+}
+
+function FinaleCarouselStaticLane({
+	slides,
+	failedImageIds,
+	onImageError,
+}: FinaleCarouselLaneProps) {
+	return (
+		<div
+			className="elite-slideshow__lane elite-slideshow__lane--static"
+			onClick={(event) => {
+				event.stopPropagation();
+			}}
+		>
+			<div className="elite-slideshow__track">
+				{slides.map((slide) => (
+					<FinaleSlideCard
+						key={slide.image.id}
+						slide={slide}
+						failed={failedImageIds.has(slide.image.id)}
+						onImageError={() => {
+							onImageError(slide.image.id);
+						}}
+					/>
+				))}
+			</div>
+		</div>
 	);
 }
 
 export default function FinaleCarousel({
 	active,
+	title,
 	rows,
 	onComplete,
+	onSaveImage,
+	saveImageBusy = false,
 }: FinaleCarouselProps) {
 	const slides = useMemo<FinaleSlide[]>(() => {
 		const result: FinaleSlide[] = [];
@@ -170,8 +288,12 @@ export default function FinaleCarousel({
 	}
 
 	const shouldScroll = slides.length > VISIBLE_CARDS;
-	const loopMs = Math.max(MIN_LOOP_MS, slides.length * STEP_MS);
-	const trackSlides = shouldScroll ? [...slides, ...slides] : slides;
+	const handleImageError = useCallback(
+		(imageId: string) => {
+			markImageFailed(imageId, setFailedImageIds);
+		},
+		[setFailedImageIds],
+	);
 
 	const finish = useCallback(() => {
 		if (completedRef.current) {
@@ -255,54 +377,50 @@ export default function FinaleCarousel({
 					/>
 				</div>
 				<header className="elite-slideshow__header">
-					<p className="elite-slideshow__message">Nice job ranking!</p>
-					<p className="elite-slideshow__submessage">
-						Every photo landed in a tier.
+					<p className="elite-slideshow__eyebrow">Complete</p>
+					<h2 className="elite-slideshow__title">{title}</h2>
+					<p className="elite-slideshow__subtitle">
+						Download an image of your tier list to share with friends.
 					</p>
 				</header>
-				<div
-					className="elite-slideshow__lane"
-					onClick={(event) => {
-						event.stopPropagation();
-					}}
-				>
-					<motion.div
-						className={`elite-slideshow__track${shouldScroll ? ' elite-slideshow__track--scrolling' : ''}`}
-						style={
-							{
-								'--finale-scroll-duration': `${String(loopMs)}ms`,
-							} as CSSProperties
-						}
-					>
-						{trackSlides.map((slide, index) => (
-							<FinaleSlideCard
-								key={`${slide.image.id}-${String(index)}`}
-								slide={slide}
-								failed={failedImageIds.has(slide.image.id)}
-								onImageError={() => {
-									setFailedImageIds((current) => {
-										if (current.has(slide.image.id)) {
-											return current;
-										}
-										const next = new Set(current);
-										next.add(slide.image.id);
-										return next;
-									});
-								}}
-							/>
-						))}
-					</motion.div>
-				</div>
+				{shouldScroll ? (
+					<FinaleCarouselEmblaLane
+						active={active}
+						slides={slides}
+						failedImageIds={failedImageIds}
+						onImageError={handleImageError}
+					/>
+				) : (
+					<FinaleCarouselStaticLane
+						slides={slides}
+						failedImageIds={failedImageIds}
+						onImageError={handleImageError}
+					/>
+				)}
 				<footer className="elite-slideshow__footer">
+					{onSaveImage && (
+						<button
+							type="button"
+							className="elite-slideshow__action elite-slideshow__action--primary"
+							onClick={(event) => {
+								event.stopPropagation();
+								onSaveImage();
+							}}
+							disabled={saveImageBusy}
+						>
+							{saveImageBusy ? 'Downloading…' : 'Download image'}
+						</button>
+					)}
 					<button
 						type="button"
-						className="elite-slideshow__continue"
+						className="elite-slideshow__action"
 						onClick={(event) => {
 							event.stopPropagation();
 							finish();
 						}}
+						disabled={saveImageBusy}
 					>
-						Continue
+						Show me my list
 					</button>
 				</footer>
 			</motion.div>

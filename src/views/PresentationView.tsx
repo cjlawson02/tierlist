@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Download, Play, X } from 'lucide-react';
 import {
 	useCallback,
 	useEffect,
@@ -13,9 +13,9 @@ import Spotlight from '../components/Spotlight';
 import TierRow from '../components/TierRow';
 import BroadcastLowerThird from '../components/presentation/BroadcastLowerThird';
 import FinaleCarousel from '../components/presentation/FinaleCarousel';
-import FinaleOverlay from '../components/presentation/FinaleOverlay';
-import PresentationQueue from '../components/presentation/PresentationQueue';
 import SoundToggle from '../components/presentation/SoundToggle';
+import TierListExportCard from '../components/presentation/TierListExportCard';
+import { saveTierListImage } from '../exportImage';
 import { celebrateTier } from '../effects/celebrate';
 import {
 	playLanding,
@@ -47,6 +47,7 @@ export default function PresentationView({
 	const moveImage = useSetupStore((state) => state.moveImage);
 
 	const tierListRef = useRef<HTMLDivElement>(null);
+	const exportRef = useRef<HTMLDivElement>(null);
 	const finaleTriggered = useRef(false);
 	const assignmentsThisSession = useRef(0);
 	const highlightTimerRef = useRef<number | null>(null);
@@ -71,47 +72,85 @@ export default function PresentationView({
 		label: string;
 		tone: ReturnType<typeof getDisappointmentTone>;
 	} | null>(null);
-	const [showFinale, setShowFinale] = useState(false);
 	const [finaleCarouselActive, setFinaleCarouselActive] = useState(false);
+	const [saveImageBusy, setSaveImageBusy] = useState(false);
+	const [toast, setToast] = useState<string | null>(null);
 
 	const hasFinaleSlides = useMemo(
 		() => rows.some((row) => row.images.length > 0),
 		[rows],
 	);
+	const isComplete = untieredImages.length === 0 && totalImages > 0;
+	const showTopTierListButton = spotlightImageId != null;
+	const showTopResumeButton =
+		queuePaused &&
+		!isComplete &&
+		spotlightImageId == null &&
+		untieredImages.length > 0 &&
+		!finaleCarouselActive;
+	const showTopDownloadButton =
+		isComplete && spotlightImageId == null && !finaleCarouselActive;
 
-	const syncLabelSize = useCallback(() => {
-		const tierList = tierListRef.current;
-		if (!tierList) {
+	const handleSaveImage = useCallback(async () => {
+		const exportRoot = exportRef.current;
+		if (!exportRoot || saveImageBusy) {
 			return;
 		}
+		setSaveImageBusy(true);
+		try {
+			await saveTierListImage(exportRoot, title);
+			setToast('Downloaded tier list image');
+		} catch (err) {
+			setToast(
+				err instanceof Error ? err.message : 'Failed to download tier list image',
+			);
+		} finally {
+			setSaveImageBusy(false);
+		}
+	}, [saveImageBusy, title]);
+
+	const syncTierLayout = useCallback(() => {
+		const tierList = tierListRef.current;
+		if (!tierList || rows.length === 0) {
+			return;
+		}
+
+		const styles = getComputedStyle(tierList);
+		const cap =
+			Number.parseFloat(
+				styles.getPropertyValue('--tier-cell-size-present'),
+			) || 240;
+		const cellSize = Math.min(
+			cap,
+			Math.max(1, Math.floor(tierList.clientHeight / rows.length)),
+		);
+		tierList.style.setProperty('--tier-cell-size', `${String(cellSize)}px`);
+
 		const labels = tierList.querySelectorAll('.tier-label-readonly');
 		if (labels.length === 0) {
+			setLabelSize(cellSize);
 			return;
 		}
-		const cellSize =
-			Number.parseFloat(
-				getComputedStyle(tierList).getPropertyValue('--tier-cell-size'),
-			) || 120;
 		const contentWidths = [...labels].map(
 			(el) => (el as HTMLElement).scrollWidth,
 		);
 		setLabelSize(Math.max(...contentWidths, cellSize));
-	}, []);
+	}, [rows.length]);
 
 	useEffect(() => {
-		syncLabelSize();
+		syncTierLayout();
 		const tierList = tierListRef.current;
 		if (!tierList) {
 			return;
 		}
 		const observer = new ResizeObserver(() => {
-			syncLabelSize();
+			syncTierLayout();
 		});
 		observer.observe(tierList);
 		return () => {
 			observer.disconnect();
 		};
-	}, [syncLabelSize, rows]);
+	}, [syncTierLayout, rows]);
 
 	useEffect(() => {
 		if (landedImageId) {
@@ -136,6 +175,18 @@ export default function PresentationView({
 	}, [lowerThird]);
 
 	useEffect(() => {
+		if (!toast) {
+			return;
+		}
+		const t = window.setTimeout(() => {
+			setToast(null);
+		}, 3000);
+		return () => {
+			window.clearTimeout(t);
+		};
+	}, [toast]);
+
+	useEffect(() => {
 		return () => {
 			stopAllSounds();
 			if (highlightTimerRef.current != null) {
@@ -157,20 +208,13 @@ export default function PresentationView({
 		) {
 			finaleTriggered.current = true;
 			const t = window.setTimeout(() => {
-				setShowFinale(true);
+				setFinaleCarouselActive(true);
 			}, 800);
 			return () => {
 				window.clearTimeout(t);
 			};
 		}
 	}, [untieredImages.length, totalImages, introActive]);
-
-	const handleFinaleContinue = useCallback(() => {
-		setShowFinale(false);
-		if (hasFinaleSlides) {
-			setFinaleCarouselActive(true);
-		}
-	}, [hasFinaleSlides]);
 
 	const handleFinaleCarouselComplete = useCallback(() => {
 		setFinaleCarouselActive(false);
@@ -214,6 +258,12 @@ export default function PresentationView({
 		}
 		void openSpotlight(untieredImages[0].id);
 	}, [openSpotlight, spotlightImageId, untieredImages]);
+
+	const showTierList = useCallback(() => {
+		clearQueueAdvance();
+		setSpotlightImageId(null);
+		setQueuePaused(true);
+	}, [clearQueueAdvance]);
 
 	const handleAssignTier = (
 		rowId: string,
@@ -342,15 +392,50 @@ export default function PresentationView({
 				</motion.span>
 			</header>
 
-			<div className="present-exit-zone">
+			<div
+				className={`present-exit-zone${finaleCarouselActive ? ' present-exit-zone--hidden' : ''}`}
+			>
 				<div className="present-exit present-exit--controls">
-					<SoundToggle iconOnly />
-					<IconButton
-						icon={ArrowLeft}
-						label="Back to setup"
-						iconOnly
-						onClick={onExitSetup}
-					/>
+					<div className="present-exit__left">
+						<SoundToggle iconOnly />
+						{!showTopTierListButton && (
+							<IconButton
+								icon={ArrowLeft}
+								label="Back to photos"
+								iconOnly
+								onClick={onExitSetup}
+							/>
+						)}
+					</div>
+					{showTopTierListButton && (
+						<IconButton
+							icon={X}
+							label="Go to tier list"
+							iconOnly
+							onClick={showTierList}
+						/>
+					)}
+					{showTopResumeButton && (
+						<IconButton
+							icon={Play}
+							label="Resume"
+							variant="primary"
+							className="present-exit__save"
+							onClick={resumeQueue}
+						/>
+					)}
+					{showTopDownloadButton && (
+						<IconButton
+							icon={Download}
+							label="Download image"
+							variant="primary"
+							className="present-exit__save"
+							disabled={saveImageBusy}
+							onClick={() => {
+								void handleSaveImage();
+							}}
+						/>
+					)}
 				</div>
 			</div>
 
@@ -389,22 +474,6 @@ export default function PresentationView({
 					))}
 				</div>
 
-				<section
-					className="pool-section presentation-pool"
-					aria-label="Photo queue"
-				>
-					<PresentationQueue
-						images={untieredImages}
-						totalImages={totalImages}
-						spotlightImageId={spotlightImageId}
-						queuePaused={queuePaused}
-						onResume={resumeQueue}
-						onSelectImage={(imageId) => {
-							clearQueueAdvance();
-							void openSpotlight(imageId);
-						}}
-					/>
-				</section>
 			</main>
 
 			<BroadcastLowerThird
@@ -419,6 +488,15 @@ export default function PresentationView({
 				image={spotlightImage}
 				photoLabel={spotlightPhotoLabel}
 				rows={rows}
+				queueImages={untieredImages}
+				totalImages={totalImages}
+				spotlightImageId={spotlightImageId}
+				queuePaused={queuePaused}
+				onResumeQueue={resumeQueue}
+				onSelectQueueImage={(imageId) => {
+					clearQueueAdvance();
+					void openSpotlight(imageId);
+				}}
 				onRelease={() => {
 					clearQueueAdvance();
 					setSpotlightImageId(null);
@@ -428,16 +506,28 @@ export default function PresentationView({
 			/>
 
 			<FinaleCarousel
-				active={finaleCarouselActive}
+				active={finaleCarouselActive && hasFinaleSlides}
+				title={title}
 				rows={rows}
 				onComplete={handleFinaleCarouselComplete}
+				onSaveImage={() => {
+					void handleSaveImage();
+				}}
+				saveImageBusy={saveImageBusy}
 			/>
 
-			<FinaleOverlay
-				visible={showFinale}
+			<TierListExportCard
+				exportRef={exportRef}
 				title={title}
-				onDismiss={handleFinaleContinue}
+				rows={rows}
+				labelSize={labelSize}
 			/>
+
+			{toast && (
+				<div className="toast" role="status">
+					{toast}
+				</div>
+			)}
 		</>
 	);
 }

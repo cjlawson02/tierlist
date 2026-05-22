@@ -4,12 +4,22 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
 	plugins: [react()],
 	base: './',
-	server: {
+		server: {
 		proxy: {
 			'/tpaas-proxy': {
 				target: 'https://tpaas.chrislawson.dev',
 				changeOrigin: true,
 				rewrite: (path) => path.replace(/^\/tpaas-proxy/, ''),
+			},
+			'/tpaas-assets-proxy': {
+				target: 'https://assets.tpaas.chrislawson.dev',
+				changeOrigin: true,
+				rewrite: (path) => path.replace(/^\/tpaas-assets-proxy/, ''),
+			},
+			'/cataas-proxy': {
+				target: 'https://cataas.com',
+				changeOrigin: true,
+				rewrite: (path) => path.replace(/^\/cataas-proxy/, ''),
 			},
 		},
 	},

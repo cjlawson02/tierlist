@@ -14,6 +14,7 @@ export default function SetupToolbar({
 	onStartPresentation,
 }: SetupToolbarProps) {
 	const addImages = useSetupStore((state) => state.addImages);
+	const hasPhotos = useSetupStore((state) => state.untieredImages.length > 0);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	return (
@@ -54,6 +55,7 @@ export default function SetupToolbar({
 				variant="primary"
 				iconSize={24}
 				className="setup-toolbar__start"
+				disabled={!hasPhotos}
 				onClick={onStartPresentation}
 			/>
 		</div>
