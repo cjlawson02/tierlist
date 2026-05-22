@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import FinaleCarousel from './FinaleCarousel';
 import { act, renderWithProviders, screen } from '../../test/render';
-import { DATA_IMAGE_PNG } from '../../test/fixtures';
+import { imageTierItem } from '../../test/fixtures';
 import { PRESENTATION_TIERS } from '../../presentationConfig';
 import { defaultTierColor } from '../../sanitize';
 
@@ -9,14 +9,14 @@ const finaleRows = PRESENTATION_TIERS.map((name, index) => ({
 	id: `row-${name.toLowerCase()}`,
 	name,
 	color: defaultTierColor(index),
-	images: index <= 1 ? [{ id: `img-${name}`, src: DATA_IMAGE_PNG }] : [],
+	images: index <= 1 ? [imageTierItem(`img-${name}`)] : [],
 }));
 
 const longFinaleRows = PRESENTATION_TIERS.map((name, index) => ({
 	id: `long-row-${name.toLowerCase()}`,
 	name,
 	color: defaultTierColor(index),
-	images: index <= 4 ? [{ id: `long-img-${name}`, src: DATA_IMAGE_PNG }] : [],
+	images: index <= 4 ? [imageTierItem(`long-img-${name}`)] : [],
 }));
 
 describe('FinaleCarousel', () => {

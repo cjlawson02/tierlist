@@ -6,6 +6,7 @@ import {
 	sanitizeImageSrc,
 	sanitizeName,
 	sanitizeStringArray,
+	sanitizeTierItemArray,
 } from './sanitize';
 
 describe('sanitizeImageSrc', () => {
@@ -76,6 +77,23 @@ describe('sanitizeStringArray', () => {
 		expect(() => sanitizeStringArray('nope', 'images')).toThrow(
 			'Invalid images.',
 		);
+	});
+});
+
+describe('sanitizeTierItemArray', () => {
+	it('accepts text slide objects', () => {
+		expect(
+			sanitizeTierItemArray(
+				[{ kind: 'text', text: 'Hello' }, DATA_IMAGE_PNG],
+				'items',
+			),
+		).toEqual([{ kind: 'text', text: 'Hello' }, DATA_IMAGE_PNG]);
+	});
+
+	it('rejects empty text slides', () => {
+		expect(() =>
+			sanitizeTierItemArray([{ kind: 'text', text: '   ' }], 'items'),
+		).toThrow('Invalid text in items[0].');
 	});
 });
 

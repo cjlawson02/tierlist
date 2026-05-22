@@ -35,7 +35,7 @@ describe('PresentationView', () => {
 			{ userEvent: { advanceTimers: vi.advanceTimersByTime } },
 		);
 
-		const dialog = await screen.findByRole('dialog', { name: /Photo 1 of 1/i });
+		const dialog = await screen.findByRole('dialog', { name: /Slide 1 of 1/i });
 		expect(within(dialog).getByRole('progressbar')).toBeInTheDocument();
 		await user.click(screen.getByRole('button', { name: 'S' }));
 
@@ -53,12 +53,12 @@ describe('PresentationView', () => {
 			{ userEvent: { advanceTimers: vi.advanceTimersByTime } },
 		);
 
-		await screen.findByRole('dialog', { name: /Photo 1 of 2/i });
+		await screen.findByRole('dialog', { name: /Slide 1 of 2/i });
 		await user.click(screen.getByRole('button', { name: 'S' }));
 		await vi.advanceTimersByTimeAsync(520 + QUEUE.pauseAfterAssignmentMs);
 
 		expect(
-			await screen.findByRole('dialog', { name: /Photo 2 of 2/i }),
+			await screen.findByRole('dialog', { name: /Slide 2 of 2/i }),
 		).toBeInTheDocument();
 	});
 
@@ -70,13 +70,13 @@ describe('PresentationView', () => {
 			{ userEvent: { advanceTimers: vi.advanceTimersByTime } },
 		);
 
-		const dialog = await screen.findByRole('dialog', { name: /Photo 1 of 3/i });
+		const dialog = await screen.findByRole('dialog', { name: /Slide 1 of 3/i });
 		await user.click(
-			within(dialog).getByRole('button', { name: 'Skip to photo 3 of 3' }),
+			within(dialog).getByRole('button', { name: /Skip to slide 3 of 3/i }),
 		);
 
 		expect(
-			await screen.findByRole('dialog', { name: /Photo 3 of 3/i }),
+			await screen.findByRole('dialog', { name: /Slide 3 of 3/i }),
 		).toBeInTheDocument();
 	});
 
@@ -86,7 +86,7 @@ describe('PresentationView', () => {
 			{ userEvent: { advanceTimers: vi.advanceTimersByTime } },
 		);
 
-		await screen.findByRole('dialog', { name: /Photo 1 of 1/i });
+		await screen.findByRole('dialog', { name: /Slide 1 of 1/i });
 		await user.click(screen.getByRole('button', { name: 'Go to tier list' }));
 
 		const resumeButton = screen.getByRole('button', { name: 'Resume' });
@@ -94,7 +94,7 @@ describe('PresentationView', () => {
 		await user.click(resumeButton);
 
 		expect(
-			await screen.findByRole('dialog', { name: /Photo 1 of 1/i }),
+			await screen.findByRole('dialog', { name: /Slide 1 of 1/i }),
 		).toBeInTheDocument();
 	});
 
@@ -104,7 +104,7 @@ describe('PresentationView', () => {
 			{ userEvent: { advanceTimers: vi.advanceTimersByTime } },
 		);
 
-		await screen.findByRole('dialog', { name: /Photo 1 of 1/i });
+		await screen.findByRole('dialog', { name: /Slide 1 of 1/i });
 		await user.click(screen.getByRole('button', { name: 'S' }));
 
 		await vi.advanceTimersByTimeAsync(800);
@@ -120,7 +120,7 @@ describe('PresentationView', () => {
 			{ userEvent: { advanceTimers: vi.advanceTimersByTime } },
 		);
 
-		await screen.findByRole('dialog', { name: /Photo 1 of 1/i });
+		await screen.findByRole('dialog', { name: /Slide 1 of 1/i });
 		await user.click(screen.getByRole('button', { name: 'S' }));
 		await vi.advanceTimersByTimeAsync(800);
 
@@ -141,7 +141,7 @@ describe('PresentationView', () => {
 		});
 	});
 
-	it('calls onExitSetup when Back to photos is clicked', async () => {
+	it('calls onExitSetup when Back to setup is clicked', async () => {
 		const onExitSetup = vi.fn();
 		const { user } = renderWithProviders(
 			<PresentationView onExitSetup={onExitSetup} />,
@@ -149,17 +149,17 @@ describe('PresentationView', () => {
 		);
 
 		const spotlight = await screen.findByRole('dialog', {
-			name: /Photo 1 of 1/i,
+			name: /Slide 1 of 1/i,
 		});
 		expect(
-			screen.queryByRole('button', { name: 'Back to photos' }),
+			screen.queryByRole('button', { name: 'Back to setup' }),
 		).not.toBeInTheDocument();
 		expect(
 			screen.getByRole('button', { name: 'Go to tier list' }),
 		).toBeInTheDocument();
 
 		await user.click(spotlight);
-		await user.click(screen.getByRole('button', { name: 'Back to photos' }));
+		await user.click(screen.getByRole('button', { name: 'Back to setup' }));
 		expect(onExitSetup).toHaveBeenCalledTimes(1);
 	});
 
@@ -171,14 +171,14 @@ describe('PresentationView', () => {
 			{ userEvent: { advanceTimers: vi.advanceTimersByTime } },
 		);
 
-		await screen.findByRole('dialog', { name: /Photo 1 of 2/i });
+		await screen.findByRole('dialog', { name: /Slide 1 of 2/i });
 		expect(
 			screen.queryByRole('button', { name: 'Download image' }),
 		).not.toBeInTheDocument();
 
 		await user.click(screen.getByRole('button', { name: 'S' }));
 		await vi.advanceTimersByTimeAsync(520 + QUEUE.pauseAfterAssignmentMs);
-		await screen.findByRole('dialog', { name: /Photo 2 of 2/i });
+		await screen.findByRole('dialog', { name: /Slide 2 of 2/i });
 		expect(
 			screen.queryByRole('button', { name: 'Download image' }),
 		).not.toBeInTheDocument();
@@ -190,7 +190,7 @@ describe('PresentationView', () => {
 			{ userEvent: { advanceTimers: vi.advanceTimersByTime } },
 		);
 
-		await screen.findByRole('dialog', { name: /Photo 1 of 1/i });
+		await screen.findByRole('dialog', { name: /Slide 1 of 1/i });
 		await user.click(screen.getByRole('button', { name: 'S' }));
 
 		await waitFor(() => {
@@ -215,7 +215,7 @@ describe('PresentationView', () => {
 			{ userEvent: { advanceTimers: vi.advanceTimersByTime } },
 		);
 
-		await screen.findByRole('dialog', { name: /Photo 1 of 1/i });
+		await screen.findByRole('dialog', { name: /Slide 1 of 1/i });
 		await user.click(screen.getByRole('button', { name: 'S' }));
 		await vi.advanceTimersByTimeAsync(800);
 
@@ -229,6 +229,31 @@ describe('PresentationView', () => {
 
 		await waitFor(() => {
 			expect(saveTierListImage).toHaveBeenCalledTimes(1);
+		});
+	});
+
+	it('assigns a text slide through the presentation queue', async () => {
+		const store = getSetupStoreState();
+		for (const item of [...store.untieredImages]) {
+			store.deleteImage(item.id);
+		}
+		store.addTextSlides(['Rank this idea']);
+
+		const { user } = renderWithProviders(
+			<PresentationView onExitSetup={vi.fn()} />,
+			{ userEvent: { advanceTimers: vi.advanceTimersByTime } },
+		);
+
+		const dialog = await screen.findByRole('dialog', { name: /Slide 1 of 1/i });
+		expect(within(dialog).getByText('Rank this idea')).toBeInTheDocument();
+		await user.click(screen.getByRole('button', { name: 'S' }));
+
+		await waitFor(() => {
+			expect(getSetupStoreState().untieredImages).toHaveLength(0);
+		});
+		expect(getSetupStoreState().rows[0]?.images[0]).toMatchObject({
+			kind: 'text',
+			text: 'Rank this idea',
 		});
 	});
 });

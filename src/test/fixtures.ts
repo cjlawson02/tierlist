@@ -1,7 +1,21 @@
-import type { SerializedTierList, TierBundleV1, TierListState } from '../types';
+import type {
+	ImageTierItem,
+	SerializedTierList,
+	TextTierItem,
+	TierBundleV1,
+	TierListState,
+} from '../types';
 import { defaultTierColor } from '../sanitize';
 
 export const DATA_IMAGE_PNG = 'data:image/png;base64,iVBORw0KGgo=';
+
+export function imageTierItem(id: string, src = DATA_IMAGE_PNG): ImageTierItem {
+	return { id, kind: 'image', src };
+}
+
+export function textTierItem(id: string, text: string): TextTierItem {
+	return { id, kind: 'text', text };
+}
 
 export function legacyTierList(
 	overrides: Partial<SerializedTierList> = {},
@@ -68,7 +82,7 @@ export function emptyTierListState(
 				images: [],
 			},
 		],
-		untieredImages: [{ id: 'img-1', src: DATA_IMAGE_PNG }],
+		untieredImages: [imageTierItem('img-1')],
 		vertical: false,
 		...overrides,
 	};

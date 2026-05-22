@@ -1,8 +1,10 @@
 import { motion } from 'motion/react';
-import type { ImageItem } from '../../types';
+import TierItemDisplay from '../TierItemDisplay';
+import { itemAccessibleKind } from '../../tierItem';
+import type { TierItem } from '../../types';
 
 interface AnimatedImageProps {
-	image: ImageItem;
+	image: TierItem;
 	spotlightImageId?: string | null;
 	onImageClick?: () => void;
 	justLanded?: boolean;
@@ -20,12 +22,10 @@ export default function AnimatedImage({
 }: AnimatedImageProps) {
 	const hiddenInSpotlight = spotlightImageId === image.id;
 
-	const img = (
+	const content = (
 		<motion.div className="spotlight-layout-frame spotlight-layout-frame--thumb">
-			<motion.img
-				src={image.src}
-				alt=""
-				className={`tier-image${hiddenInSpotlight ? ' tier-image--spotlight-hidden' : ''}`}
+			<motion.div
+				className="tier-item-thumb"
 				animate={
 					justLanded && landedSad
 						? { scale: [1, 0.92, 0.96], rotate: [0, 1, 0], y: [0, 4, 0] }
@@ -40,7 +40,13 @@ export default function AnimatedImage({
 							? { duration: 0.45, ease: [0.22, 1, 0.36, 1] }
 							: { type: 'spring', stiffness: 380, damping: 36 }
 				}
-			/>
+			>
+				<TierItemDisplay
+					item={image}
+					variant="thumb"
+					hiddenInSpotlight={hiddenInSpotlight}
+				/>
+			</motion.div>
 		</motion.div>
 	);
 
@@ -55,12 +61,12 @@ export default function AnimatedImage({
 					type="button"
 					className="tier-image-btn"
 					onClick={onImageClick}
-					aria-label="View image"
+					aria-label={`View ${itemAccessibleKind(image)}`}
 				>
-					{img}
+					{content}
 				</button>
 			) : (
-				img
+				content
 			)}
 			{children}
 		</motion.span>

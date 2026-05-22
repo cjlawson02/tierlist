@@ -1,6 +1,6 @@
 import { LayoutGroup, motion } from 'motion/react';
 import ImageList from './ImageList';
-import type { ImageItem } from '../types';
+import type { TierItem } from '../types';
 
 export default function ImagePool({
 	images,
@@ -9,7 +9,7 @@ export default function ImagePool({
 	onDelete,
 	layoutScroll,
 }: {
-	images: ImageItem[];
+	images: TierItem[];
 	spotlightImageId?: string | null;
 	onImageClick?: (imageId: string) => void;
 	onDelete?: (imageId: string) => void;
@@ -28,7 +28,7 @@ export default function ImagePool({
 	if (layoutScroll) {
 		return (
 			<LayoutGroup>
-				<motion.section layoutScroll className={className} aria-label="Photos">
+				<motion.section layoutScroll className={className} aria-label="Slides">
 					{content}
 				</motion.section>
 			</LayoutGroup>
@@ -37,7 +37,7 @@ export default function ImagePool({
 
 	return (
 		<LayoutGroup>
-			<section className={className} aria-label="Photos">
+			<section className={className} aria-label="Slides">
 				{content}
 			</section>
 		</LayoutGroup>

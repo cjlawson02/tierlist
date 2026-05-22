@@ -1,4 +1,5 @@
-import { MAX_NAME_LEN, TIER_COLORS } from './types';
+import type { SerializedTierItem } from './types';
+import { MAX_NAME_LEN, MAX_TEXT_LEN, TIER_COLORS } from './types';
 
 const HEX_COLOR = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 const RGB_COLOR = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/;
@@ -38,6 +39,44 @@ export function defaultTierColor(index: number): string {
 	return TIER_COLORS[index % TIER_COLORS.length];
 }
 
+export function sanitizeTextContent(text: unknown): string | null {
+	if (typeof text !== 'string') {
+		return null;
+	}
+	const trimmed = text.trim();
+	if (!trimmed) {
+		return null;
+	}
+	return trimmed.slice(0, MAX_TEXT_LEN);
+}
+
+function sanitizeSerializedTierItem(
+	value: unknown,
+	label: string,
+): SerializedTierItem {
+	if (typeof value === 'string') {
+		const src = sanitizeImageSrc(value);
+		if (!src) {
+			throw new Error(
+				`Invalid image in ${label}. Only embedded data:image URLs are supported.`,
+			);
+		}
+		return src;
+	}
+	if (!value || typeof value !== 'object') {
+		throw new Error(`Invalid item in ${label}.`);
+	}
+	const record = value as Record<string, unknown>;
+	if (record.kind !== 'text' || typeof record.text !== 'string') {
+		throw new Error(`Invalid item in ${label}.`);
+	}
+	const text = sanitizeTextContent(record.text);
+	if (!text) {
+		throw new Error(`Invalid text in ${label}.`);
+	}
+	return { kind: 'text', text };
+}
+
 export function sanitizeStringArray(values: unknown, label: string): string[] {
 	if (!Array.isArray(values)) {
 		throw new Error(`Invalid ${label}.`);
@@ -53,4 +92,16 @@ export function sanitizeStringArray(values: unknown, label: string): string[] {
 		result.push(src);
 	}
 	return result;
+}
+
+export function sanitizeTierItemArray(
+	values: unknown,
+	label: string,
+): SerializedTierItem[] {
+	if (!Array.isArray(values)) {
+		throw new Error(`Invalid ${label}.`);
+	}
+	return values.map((value, index) =>
+		sanitizeSerializedTierItem(value, `${label}[${String(index)}]`),
+	);
 }

@@ -63,6 +63,20 @@ describe('useSetupStore', () => {
 		expect(rowImages.map((img) => img.id)).toEqual([second?.id, first?.id]);
 	});
 
+	it('addTextSlides appends text items to the pool', () => {
+		getSetupStoreState().addTextSlides(['Hello', 'World']);
+		expect(getSetupStoreState().untieredImages).toHaveLength(2);
+		expect(getSetupStoreState().untieredImages[0]).toMatchObject({
+			kind: 'text',
+			text: 'Hello',
+		});
+	});
+
+	it('addTextSlides ignores whitespace-only lines', () => {
+		getSetupStoreState().addTextSlides(['   ', '\n']);
+		expect(getSetupStoreState().untieredImages).toHaveLength(0);
+	});
+
 	it('resetPresentation returns tiered images to the pool', () => {
 		getSetupStoreState().addImages([DATA_IMAGE_PNG]);
 		const imageId = getSetupStoreState().untieredImages[0]?.id ?? '';

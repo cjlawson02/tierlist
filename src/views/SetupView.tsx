@@ -86,12 +86,12 @@ export default function SetupView({
 
 			<main className="main-content setup-main">
 				<InspirationPanel onStartDemo={onStartInspirationDemo} />
-				<section className="setup-panel" aria-label="Photos to rank">
+				<section className="setup-panel" aria-label="Slides to rank">
 					<SetupToolbar
 						onToast={setToast}
 						onStartPresentation={onStartPresentation}
 					/>
-					<p className="pool-label">Photos</p>
+					<p className="pool-label">Slides</p>
 					<div className="bottom-container setup-pool-layout">
 						<ImagePool
 							images={untieredImages}
@@ -108,7 +108,7 @@ export default function SetupView({
 
 			<Spotlight
 				mode="preview"
-				image={previewImage}
+				item={previewImage}
 				onRelease={() => {
 					setPreviewImageId(null);
 				}}

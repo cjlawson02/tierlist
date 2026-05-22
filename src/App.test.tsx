@@ -37,7 +37,7 @@ describe('App', () => {
 		await vi.advanceTimersByTimeAsync(500);
 
 		expect(
-			await screen.findByRole('button', { name: 'Back to photos' }),
+			await screen.findByRole('button', { name: 'Back to setup' }),
 		).toBeInTheDocument();
 	});
 
@@ -54,7 +54,7 @@ describe('App', () => {
 		);
 		await vi.advanceTimersByTimeAsync(500);
 		await user.click(
-			await screen.findByRole('button', { name: 'Back to photos' }),
+			await screen.findByRole('button', { name: 'Back to setup' }),
 		);
 		await vi.advanceTimersByTimeAsync(100);
 

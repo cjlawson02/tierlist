@@ -1,9 +1,9 @@
 import { Trash2 } from 'lucide-react';
 import AnimatedImage from './motion/AnimatedImage';
-import type { ImageItem } from '../types';
+import type { TierItem } from '../types';
 
 interface ImageListProps {
-	images: ImageItem[];
+	images: TierItem[];
 	spotlightImageId?: string | null;
 	landedImageId?: string | null;
 	landedSad?: boolean;
@@ -43,7 +43,7 @@ export default function ImageList({
 								onClick={() => {
 									onDelete(image.id);
 								}}
-								aria-label="Remove image"
+								aria-label="Remove slide"
 							>
 								<Trash2 size={16} aria-hidden />
 							</button>

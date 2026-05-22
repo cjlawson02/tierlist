@@ -3,9 +3,33 @@ import {
 	defaultTierColor,
 	sanitizeColor,
 	sanitizeName,
-	sanitizeStringArray,
+	sanitizeTierItemArray,
 } from './sanitize';
-import type { SerializedTierList, TierBundleV1, TierListState } from './types';
+import { serializeTierItem, isImageItem } from './types';
+import type {
+	SerializedTierItem,
+	SerializedTierList,
+	TierBundleV1,
+	TierListState,
+} from './types';
+
+function isSerializedTierItem(value: unknown): value is SerializedTierItem {
+	if (typeof value === 'string') {
+		return true;
+	}
+	if (!value || typeof value !== 'object') {
+		return false;
+	}
+	const record = value as Record<string, unknown>;
+	return record.kind === 'text' && typeof record.text === 'string';
+}
+
+function isSerializedTierItemArray(values: unknown): values is unknown[] {
+	return (
+		Array.isArray(values) &&
+		values.every((value) => isSerializedTierItem(value))
+	);
+}
 
 function isLegacyTierList(data: unknown): data is SerializedTierList {
 	if (!data || typeof data !== 'object') {
@@ -27,7 +51,7 @@ function isLegacyTierList(data: unknown): data is SerializedTierList {
 			typeof record.name === 'string' &&
 			typeof record.color === 'string' &&
 			Array.isArray(record.imgs) &&
-			record.imgs.every((img) => typeof img === 'string')
+			isSerializedTierItemArray(record.imgs)
 		);
 	});
 }
@@ -49,7 +73,7 @@ function isTierBundleDocument(data: unknown): data is TierBundleV1['document'] {
 			typeof record.name === 'string' &&
 			typeof record.color === 'string' &&
 			Array.isArray(record.images) &&
-			record.images.every((img) => typeof img === 'string')
+			isSerializedTierItemArray(record.images)
 		);
 	});
 }
@@ -60,11 +84,11 @@ function sanitizeLegacyTierList(data: SerializedTierList): SerializedTierList {
 		rows: data.rows.map((row, index) => ({
 			name: sanitizeName(row.name, `Tier ${String(index + 1)}`),
 			color: sanitizeColor(row.color, defaultTierColor(index)),
-			imgs: sanitizeStringArray(row.imgs, `row "${row.name}"`),
+			imgs: sanitizeTierItemArray(row.imgs, `row "${row.name}"`),
 		})),
 		untiered:
 			data.untiered != null
-				? sanitizeStringArray(data.untiered, 'untiered images')
+				? sanitizeTierItemArray(data.untiered, 'untiered items')
 				: undefined,
 	};
 }
@@ -78,11 +102,11 @@ function sanitizeBundleDocument(
 		rows: doc.rows.map((row, index) => ({
 			name: sanitizeName(row.name, `Tier ${String(index + 1)}`),
 			color: sanitizeColor(row.color, defaultTierColor(index)),
-			images: sanitizeStringArray(row.images, `row "${row.name}"`),
+			images: sanitizeTierItemArray(row.images, `row "${row.name}"`),
 		})),
 		untiered:
 			doc.untiered != null
-				? sanitizeStringArray(doc.untiered, 'untiered images')
+				? sanitizeTierItemArray(doc.untiered, 'untiered items')
 				: undefined,
 	};
 }
@@ -135,9 +159,12 @@ function normalizeToBundle(data: unknown): TierBundleV1 {
 }
 
 export function toBundle(state: TierListState): TierBundleV1 {
-	const imageCount =
-		state.untieredImages.length +
-		state.rows.reduce((n, row) => n + row.images.length, 0);
+	const allItems = [
+		...state.untieredImages,
+		...state.rows.flatMap((row) => row.images),
+	];
+	const slideCount = allItems.length;
+	const imageCount = allItems.filter((item) => isImageItem(item)).length;
 	const bundle: TierBundleV1 = {
 		format: 'tier-bundle',
 		version: 1,
@@ -146,6 +173,7 @@ export function toBundle(state: TierListState): TierBundleV1 {
 		meta: {
 			title: state.title,
 			imageCount,
+			slideCount,
 		},
 		document: {
 			title: state.title,
@@ -153,11 +181,11 @@ export function toBundle(state: TierListState): TierBundleV1 {
 			rows: state.rows.map((row) => ({
 				name: row.name,
 				color: row.color,
-				images: row.images.map((img) => img.src),
+				images: row.images.map(serializeTierItem),
 			})),
 			untiered:
 				state.untieredImages.length > 0
-					? state.untieredImages.map((img) => img.src)
+					? state.untieredImages.map(serializeTierItem)
 					: undefined,
 		},
 	};
@@ -165,6 +193,7 @@ export function toBundle(state: TierListState): TierBundleV1 {
 	bundle.meta = {
 		title: state.title,
 		imageCount,
+		slideCount,
 		approxBytes: new Blob([json]).size,
 	};
 	return bundle;

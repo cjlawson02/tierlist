@@ -6,7 +6,7 @@ import { DATA_IMAGE_PNG } from '../../test/fixtures';
 import { getSetupStoreState } from '../../test/store';
 
 describe('SetupToolbar', () => {
-	it('disables start presentation until photos are added', () => {
+	it('disables start presentation until slides are added', () => {
 		renderWithProviders(
 			<SetupToolbar onToast={vi.fn()} onStartPresentation={vi.fn()} />,
 		);
@@ -48,5 +48,39 @@ describe('SetupToolbar', () => {
 
 		expect(getSetupStoreState().untieredImages).toHaveLength(1);
 		expect(onToast).not.toHaveBeenCalled();
+	});
+
+	it('adds text slides from the editor', async () => {
+		const onToast = vi.fn();
+		const { user } = renderWithProviders(
+			<SetupToolbar onToast={onToast} onStartPresentation={vi.fn()} />,
+		);
+
+		await user.click(screen.getByRole('button', { name: 'Add text slides' }));
+		await user.type(
+			screen.getByLabelText('One slide per line'),
+			'First idea\nSecond idea',
+		);
+		await user.click(screen.getByRole('button', { name: 'Add slides' }));
+
+		expect(getSetupStoreState().untieredImages).toHaveLength(2);
+		expect(getSetupStoreState().untieredImages[0]).toMatchObject({
+			kind: 'text',
+			text: 'First idea',
+		});
+		expect(onToast).toHaveBeenCalledWith('Added 2 text slide(s)');
+	});
+
+	it('clears the draft when cancel is clicked', async () => {
+		const { user } = renderWithProviders(
+			<SetupToolbar onToast={vi.fn()} onStartPresentation={vi.fn()} />,
+		);
+
+		await user.click(screen.getByRole('button', { name: 'Add text slides' }));
+		await user.type(screen.getByLabelText('One slide per line'), 'Draft text');
+		await user.click(screen.getByRole('button', { name: 'Cancel' }));
+		await user.click(screen.getByRole('button', { name: 'Add text slides' }));
+
+		expect(screen.getByLabelText('One slide per line')).toHaveValue('');
 	});
 });

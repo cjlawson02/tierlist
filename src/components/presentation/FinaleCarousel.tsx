@@ -13,10 +13,12 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import IconButton from '../IconButton';
-import type { ImageItem, TierRow } from '../../types';
+import TierItemDisplay from '../TierItemDisplay';
+import type { TierItem, TierRow } from '../../types';
+import { isImageItem } from '../../types';
 
 interface FinaleSlide {
-	image: ImageItem;
+	item: TierItem;
 	tierName: string;
 	tierColor: string;
 }
@@ -58,6 +60,22 @@ function FinaleSlideCard({
 		}
 		const { clientWidth, clientHeight } = media;
 		const img = media.querySelector('img');
+		const textSlide = media.querySelector(
+			'.tier-text-slide--finale, .tier-text-slide--hero',
+		);
+		if (textSlide instanceof HTMLElement) {
+			const rect = textSlide.getBoundingClientRect();
+			if (rect.width === 0 && rect.height === 0) {
+				setBadgePosition(null);
+				return;
+			}
+			const mediaRect = media.getBoundingClientRect();
+			setBadgePosition({
+				left: rect.left - mediaRect.left + rect.width / 2,
+				bottom: mediaRect.bottom - rect.bottom + BADGE_INSET_PX,
+			});
+			return;
+		}
 		if (
 			failed ||
 			!(img instanceof HTMLImageElement) ||
@@ -94,11 +112,11 @@ function FinaleSlideCard({
 		return () => {
 			observer.disconnect();
 		};
-	}, [slide.image.src, syncBadgePosition]);
+	}, [slide.item, syncBadgePosition]);
 
 	return (
 		<div className="elite-slideshow__media" ref={mediaRef}>
-			{failed ? (
+			{failed && isImageItem(slide.item) ? (
 				<div
 					className="elite-slideshow__image-fallback"
 					role="img"
@@ -107,14 +125,13 @@ function FinaleSlideCard({
 					Image unavailable
 				</div>
 			) : (
-				<img
-					src={slide.image.src}
-					alt=""
-					data-testid={`finale-slide-${slide.image.id}`}
-					className="elite-slideshow__image"
-					draggable={false}
-					onLoad={syncBadgePosition}
-					onError={onImageError}
+				<TierItemDisplay
+					item={slide.item}
+					variant="finale"
+					data-testid={`finale-slide-${slide.item.id}`}
+					onImageError={onImageError}
+					onImageLoad={syncBadgePosition}
+					onContentReady={syncBadgePosition}
 				/>
 			)}
 			<span
@@ -136,29 +153,29 @@ function FinaleSlideCard({
 	);
 }
 
-function markImageFailed(
-	imageId: string,
-	setFailedImageIds: Dispatch<SetStateAction<Set<string>>>,
+function markItemFailed(
+	itemId: string,
+	setFailedItemIds: Dispatch<SetStateAction<Set<string>>>,
 ) {
-	setFailedImageIds((current) => {
-		if (current.has(imageId)) {
+	setFailedItemIds((current) => {
+		if (current.has(itemId)) {
 			return current;
 		}
 		const next = new Set(current);
-		next.add(imageId);
+		next.add(itemId);
 		return next;
 	});
 }
 
 interface FinaleCarouselLaneProps {
 	slides: FinaleSlide[];
-	failedImageIds: Set<string>;
-	onImageError: (imageId: string) => void;
+	failedItemIds: Set<string>;
+	onImageError: (itemId: string) => void;
 }
 
 function FinaleCarouselEmblaLane({
 	slides,
-	failedImageIds,
+	failedItemIds,
 	onImageError,
 	active,
 }: FinaleCarouselLaneProps & { active: boolean }) {
@@ -206,11 +223,11 @@ function FinaleCarouselEmblaLane({
 				<motion.div className="elite-slideshow__track">
 					{slides.map((slide) => (
 						<FinaleSlideCard
-							key={slide.image.id}
+							key={slide.item.id}
 							slide={slide}
-							failed={failedImageIds.has(slide.image.id)}
+							failed={failedItemIds.has(slide.item.id)}
 							onImageError={() => {
-								onImageError(slide.image.id);
+								onImageError(slide.item.id);
 							}}
 						/>
 					))}
@@ -222,7 +239,7 @@ function FinaleCarouselEmblaLane({
 
 function FinaleCarouselStaticLane({
 	slides,
-	failedImageIds,
+	failedItemIds,
 	onImageError,
 }: FinaleCarouselLaneProps) {
 	return (
@@ -235,11 +252,11 @@ function FinaleCarouselStaticLane({
 			<div className="elite-slideshow__track">
 				{slides.map((slide) => (
 					<FinaleSlideCard
-						key={slide.image.id}
+						key={slide.item.id}
 						slide={slide}
-						failed={failedImageIds.has(slide.image.id)}
+						failed={failedItemIds.has(slide.item.id)}
 						onImageError={() => {
-							onImageError(slide.image.id);
+							onImageError(slide.item.id);
 						}}
 					/>
 				))}
@@ -262,9 +279,9 @@ export default function FinaleCarousel({
 			if (row.images.length === 0) {
 				continue;
 			}
-			row.images.forEach((image) => {
+			row.images.forEach((item) => {
 				result.push({
-					image,
+					item,
 					tierName: row.name,
 					tierColor: row.color,
 				});
@@ -274,22 +291,22 @@ export default function FinaleCarousel({
 	}, [rows]);
 
 	const completedRef = useRef(false);
-	const [failedImageIds, setFailedImageIds] = useState<Set<string>>(new Set());
+	const [failedItemIds, setFailedItemIds] = useState<Set<string>>(new Set());
 	const [prevActive, setPrevActive] = useState(active);
 
 	if (active !== prevActive) {
 		setPrevActive(active);
 		if (active) {
-			setFailedImageIds(new Set());
+			setFailedItemIds(new Set());
 		}
 	}
 
 	const shouldScroll = slides.length > VISIBLE_CARDS;
 	const handleImageError = useCallback(
-		(imageId: string) => {
-			markImageFailed(imageId, setFailedImageIds);
+		(itemId: string) => {
+			markItemFailed(itemId, setFailedItemIds);
 		},
-		[setFailedImageIds],
+		[setFailedItemIds],
 	);
 
 	const finish = useCallback(() => {
@@ -384,13 +401,13 @@ export default function FinaleCarousel({
 					<FinaleCarouselEmblaLane
 						active={active}
 						slides={slides}
-						failedImageIds={failedImageIds}
+						failedItemIds={failedItemIds}
 						onImageError={handleImageError}
 					/>
 				) : (
 					<FinaleCarouselStaticLane
 						slides={slides}
-						failedImageIds={failedImageIds}
+						failedItemIds={failedItemIds}
 						onImageError={handleImageError}
 					/>
 				)}

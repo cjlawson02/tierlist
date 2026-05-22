@@ -1,12 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import ImageList from './ImageList';
 import { renderWithProviders, screen } from '../test/render';
-import { DATA_IMAGE_PNG } from '../test/fixtures';
+import { imageTierItem, textTierItem } from '../test/fixtures';
 
-const images = [
-	{ id: 'img-1', src: DATA_IMAGE_PNG },
-	{ id: 'img-2', src: DATA_IMAGE_PNG },
-];
+const images = [imageTierItem('img-1'), imageTierItem('img-2')];
 
 describe('ImageList', () => {
 	it('calls onImageClick with the image id', async () => {
@@ -27,7 +24,15 @@ describe('ImageList', () => {
 			<ImageList images={images.slice(0, 1)} onDelete={onDelete} />,
 		);
 
-		await user.click(screen.getByRole('button', { name: 'Remove image' }));
+		await user.click(screen.getByRole('button', { name: 'Remove slide' }));
 		expect(onDelete).toHaveBeenCalledWith('img-1');
+	});
+
+	it('renders text slide content', () => {
+		renderWithProviders(
+			<ImageList images={[textTierItem('text-1', 'Rank me')]} />,
+		);
+
+		expect(screen.getByText('Rank me')).toBeInTheDocument();
 	});
 });

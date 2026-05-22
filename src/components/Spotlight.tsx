@@ -7,22 +7,24 @@ import {
 	type CSSProperties,
 } from 'react';
 import { createPortal } from 'react-dom';
+import TierItemDisplay from './TierItemDisplay';
 import PresentationQueue from './presentation/PresentationQueue';
-import type { ImageItem, TierRow } from '../types';
+import type { TierItem, TierRow } from '../types';
+import { isTextItem } from '../types';
 
 interface SpotlightProps {
-	image: ImageItem | null;
+	item?: TierItem | null;
 	/** Clears spotlight selection in parent immediately so the list thumbnail reappears */
 	onRelease: () => void;
 	mode?: 'assign' | 'preview';
-	photoLabel?: string | null;
+	slideLabel?: string | null;
 	rows?: TierRow[];
-	queueImages?: ImageItem[];
-	totalImages?: number;
-	spotlightImageId?: string | null;
+	queueItems?: TierItem[];
+	totalSlides?: number;
+	spotlightItemId?: string | null;
 	queuePaused?: boolean;
 	onResumeQueue?: () => void;
-	onSelectQueueImage?: (imageId: string) => void;
+	onSelectQueueItem?: (itemId: string) => void;
 	onAssignTier?: (
 		rowId: string,
 		rowName: string,
@@ -32,30 +34,30 @@ interface SpotlightProps {
 }
 
 export default function Spotlight({
-	image,
+	item = null,
 	onRelease,
 	mode = 'assign',
-	photoLabel,
+	slideLabel = null,
 	rows = [],
-	queueImages = [],
-	totalImages = 0,
-	spotlightImageId = null,
+	queueItems = [],
+	totalSlides = 0,
+	spotlightItemId = null,
 	queuePaused = false,
 	onResumeQueue,
-	onSelectQueueImage,
+	onSelectQueueItem,
 	onAssignTier,
 }: SpotlightProps) {
 	const dialogRef = useRef<HTMLDivElement>(null);
 	const previousFocus = useRef<HTMLElement | null>(null);
 	const isPreview = mode === 'preview';
-	const [displayImage, setDisplayImage] = useState<ImageItem | null>(image);
-	const [isVisible, setIsVisible] = useState(image != null);
-	const [prevImage, setPrevImage] = useState(image);
+	const [displayItem, setDisplayItem] = useState<TierItem | null>(item);
+	const [isVisible, setIsVisible] = useState(item != null);
+	const [prevItem, setPrevItem] = useState(item);
 
-	if (image !== prevImage) {
-		setPrevImage(image);
-		if (image) {
-			setDisplayImage(image);
+	if (item !== prevItem) {
+		setPrevItem(item);
+		if (item) {
+			setDisplayItem(item);
 			setIsVisible(true);
 		} else {
 			setIsVisible(false);
@@ -83,7 +85,7 @@ export default function Spotlight({
 	);
 
 	const handleExitComplete = useCallback(() => {
-		setDisplayImage(null);
+		setDisplayItem(null);
 		if (previousFocus.current) {
 			previousFocus.current.focus();
 			previousFocus.current = null;
@@ -91,15 +93,15 @@ export default function Spotlight({
 	}, []);
 
 	useEffect(() => {
-		if (!image) {
+		if (!item) {
 			return;
 		}
 		previousFocus.current = document.activeElement as HTMLElement | null;
 		requestAnimationFrame(() => dialogRef.current?.focus());
-	}, [image]);
+	}, [item]);
 
 	useEffect(() => {
-		if (!image || isPreview) {
+		if (!item || isPreview) {
 			return;
 		}
 		const onKeyDown = (event: KeyboardEvent) => {
@@ -119,10 +121,10 @@ export default function Spotlight({
 		return () => {
 			window.removeEventListener('keydown', onKeyDown);
 		};
-	}, [image, rows, requestClose, assign, isPreview]);
+	}, [item, rows, requestClose, assign, isPreview]);
 
 	useEffect(() => {
-		if (!image || !isPreview) {
+		if (!item || !isPreview) {
 			return;
 		}
 		const onKeyDown = (event: KeyboardEvent) => {
@@ -135,11 +137,11 @@ export default function Spotlight({
 		return () => {
 			window.removeEventListener('keydown', onKeyDown);
 		};
-	}, [image, requestClose, isPreview]);
+	}, [item, requestClose, isPreview]);
 
 	return createPortal(
 		<AnimatePresence onExitComplete={handleExitComplete}>
-			{displayImage && isVisible && (
+			{displayItem && isVisible && (
 				<motion.div
 					key={isPreview ? 'spotlight-preview' : 'spotlight-assign'}
 					className={`spotlight-backdrop${isPreview ? ' spotlight-backdrop--preview' : ' spotlight-backdrop--assign'} spotlight-backdrop--broadcast`}
@@ -148,10 +150,12 @@ export default function Spotlight({
 					aria-modal="true"
 					aria-label={
 						isPreview
-							? 'Image preview — tap outside or press Escape to close'
-							: photoLabel
-								? `${photoLabel} — assign a tier or press Escape to pause`
-								: 'Image spotlight — assign a tier or press Escape to pause'
+							? isTextItem(displayItem)
+								? 'Text slide preview — tap outside or press Escape to close'
+								: 'Image preview — tap outside or press Escape to close'
+							: slideLabel
+								? `${slideLabel} — assign a tier or press Escape to pause`
+								: 'Slide spotlight — assign a tier or press Escape to pause'
 					}
 					tabIndex={-1}
 					ref={dialogRef}
@@ -180,34 +184,29 @@ export default function Spotlight({
 						}
 					>
 						{!isPreview &&
-							totalImages > 0 &&
+							totalSlides > 0 &&
 							onResumeQueue &&
-							onSelectQueueImage && (
+							onSelectQueueItem && (
 								<PresentationQueue
-									images={queueImages}
-									totalImages={totalImages}
-									spotlightImageId={spotlightImageId}
+									items={queueItems}
+									totalSlides={totalSlides}
+									spotlightItemId={spotlightItemId}
 									queuePaused={queuePaused}
 									onResume={onResumeQueue}
-									onSelectImage={onSelectQueueImage}
+									onSelectItem={onSelectQueueItem}
 								/>
 							)}
 						<div className="spotlight-image-wrap">
 							<AnimatePresence mode="popLayout">
 								<motion.div
-									key={displayImage.id}
+									key={displayItem.id}
 									className="spotlight-layout-frame spotlight-layout-frame--hero"
 									initial={{ opacity: 0, scale: 0.96 }}
 									animate={{ opacity: 1, scale: 1 }}
 									exit={{ opacity: 0, scale: 0.98 }}
 									transition={{ type: 'spring', stiffness: 420, damping: 34 }}
 								>
-									<img
-										src={displayImage.src}
-										alt=""
-										className="spotlight-image"
-										draggable={false}
-									/>
+									<TierItemDisplay item={displayItem} variant="hero" />
 								</motion.div>
 							</AnimatePresence>
 						</div>

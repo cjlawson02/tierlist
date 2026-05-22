@@ -79,6 +79,22 @@ describe('normalizeToBundle', () => {
 			),
 		).toThrow('Only embedded data:image URLs are supported.');
 	});
+
+	it('rejects invalid item types in legacy tier lists', () => {
+		expect(() =>
+			normalizeToBundle(
+				legacyTierList({
+					rows: [
+						{
+							name: 'S',
+							color: defaultTierColor(0),
+							imgs: [42 as unknown as string],
+						},
+					],
+				}),
+			),
+		).toThrow('Not a valid Tier List file.');
+	});
 });
 
 describe('toBundle / bundleToSerialized', () => {
@@ -88,9 +104,36 @@ describe('toBundle / bundleToSerialized', () => {
 		const serialized = bundleToSerialized(bundle);
 
 		expect(bundle.meta?.imageCount).toBe(1);
+		expect(bundle.meta?.slideCount).toBe(1);
 		expect(bundle.meta?.approxBytes).toBeGreaterThan(0);
 		expect(serialized.title).toBe(state.title);
 		expect(serialized.rows[0]?.imgs).toEqual([]);
 		expect(serialized.untiered).toEqual([DATA_IMAGE_PNG]);
+	});
+
+	it('round-trips text slides through bundle serialization', () => {
+		const state = emptyTierListState({
+			untieredImages: [{ id: 'text-1', kind: 'text', text: 'Hello world' }],
+		});
+		const bundle = toBundle(state);
+		const normalized = normalizeToBundle(bundle);
+
+		expect(bundle.meta?.imageCount).toBe(0);
+		expect(bundle.meta?.slideCount).toBe(1);
+		expect(normalized.document.untiered).toEqual([
+			{ kind: 'text', text: 'Hello world' },
+		]);
+	});
+
+	it('counts image and text slides separately in bundle meta', () => {
+		const state = emptyTierListState({
+			untieredImages: [
+				{ id: 'text-1', kind: 'text', text: 'Hello' },
+				{ id: 'img-1', kind: 'image', src: DATA_IMAGE_PNG },
+			],
+		});
+		const bundle = toBundle(state);
+		expect(bundle.meta?.slideCount).toBe(2);
+		expect(bundle.meta?.imageCount).toBe(1);
 	});
 });

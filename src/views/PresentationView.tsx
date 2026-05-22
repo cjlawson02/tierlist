@@ -377,7 +377,7 @@ export default function PresentationView({
 			: -1;
 	const spotlightPhotoLabel =
 		spotlightImageId && totalImages > 0
-			? `Photo ${String(
+			? `Slide ${String(
 					spotlightQueueIndex >= 0
 						? assignedCount + spotlightQueueIndex + 1
 						: assignedCount + 1,
@@ -410,7 +410,7 @@ export default function PresentationView({
 						{!showTopTierListButton && (
 							<IconButton
 								icon={ArrowLeft}
-								label="Back to photos"
+								label="Back to setup"
 								iconOnly
 								onClick={onExitSetup}
 							/>
@@ -493,15 +493,15 @@ export default function PresentationView({
 
 			<Spotlight
 				mode="assign"
-				image={spotlightImage}
-				photoLabel={spotlightPhotoLabel}
+				item={spotlightImage}
+				slideLabel={spotlightPhotoLabel}
 				rows={rows}
-				queueImages={untieredImages}
-				totalImages={totalImages}
-				spotlightImageId={spotlightImageId}
+				queueItems={untieredImages}
+				totalSlides={totalImages}
+				spotlightItemId={spotlightImageId}
 				queuePaused={queuePaused}
 				onResumeQueue={resumeQueue}
-				onSelectQueueImage={(imageId) => {
+				onSelectQueueItem={(imageId) => {
 					clearQueueAdvance();
 					void openSpotlight(imageId);
 				}}

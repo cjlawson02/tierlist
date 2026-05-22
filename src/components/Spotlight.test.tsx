@@ -1,18 +1,18 @@
 import { describe, expect, it, vi } from 'vitest';
 import Spotlight from './Spotlight';
 import { renderWithProviders, screen, within } from '../test/render';
-import { DATA_IMAGE_PNG } from '../test/fixtures';
+import { imageTierItem } from '../test/fixtures';
 
-const image = { id: 'img-1', src: DATA_IMAGE_PNG };
+const image = imageTierItem('img-1');
 
 describe('Spotlight', () => {
 	it('closes when the backdrop is clicked in preview mode', async () => {
 		const onRelease = vi.fn();
 		const { rerender, user } = renderWithProviders(
-			<Spotlight mode="preview" image={null} onRelease={onRelease} />,
+			<Spotlight mode="preview" item={null} onRelease={onRelease} />,
 		);
 
-		rerender(<Spotlight mode="preview" image={image} onRelease={onRelease} />);
+		rerender(<Spotlight mode="preview" item={image} onRelease={onRelease} />);
 
 		await user.click(
 			await screen.findByRole('button', { name: 'Close preview' }),
@@ -23,10 +23,10 @@ describe('Spotlight', () => {
 	it('closes on Escape in preview mode', async () => {
 		const onRelease = vi.fn();
 		const { rerender, user } = renderWithProviders(
-			<Spotlight mode="preview" image={null} onRelease={onRelease} />,
+			<Spotlight mode="preview" item={null} onRelease={onRelease} />,
 		);
 
-		rerender(<Spotlight mode="preview" image={image} onRelease={onRelease} />);
+		rerender(<Spotlight mode="preview" item={image} onRelease={onRelease} />);
 
 		expect(
 			await screen.findByRole('dialog', { name: /Image preview/i }),
@@ -47,7 +47,7 @@ describe('Spotlight', () => {
 		const { rerender, user } = renderWithProviders(
 			<Spotlight
 				mode="assign"
-				image={null}
+				item={null}
 				rows={rows}
 				onRelease={onRelease}
 				onAssignTier={onAssignTier}
@@ -57,7 +57,7 @@ describe('Spotlight', () => {
 		rerender(
 			<Spotlight
 				mode="assign"
-				image={image}
+				item={image}
 				rows={rows}
 				onRelease={onRelease}
 				onAssignTier={onAssignTier}
@@ -78,7 +78,7 @@ describe('Spotlight', () => {
 		const { rerender, user } = renderWithProviders(
 			<Spotlight
 				mode="assign"
-				image={null}
+				item={null}
 				rows={rows}
 				onRelease={vi.fn()}
 				onAssignTier={onAssignTier}
@@ -88,7 +88,7 @@ describe('Spotlight', () => {
 		rerender(
 			<Spotlight
 				mode="assign"
-				image={image}
+				item={image}
 				rows={rows}
 				onRelease={vi.fn()}
 				onAssignTier={onAssignTier}
@@ -99,55 +99,74 @@ describe('Spotlight', () => {
 		expect(onAssignTier).toHaveBeenCalledWith('row-s', 'S', '#f00', 0);
 	});
 
-	it('keeps the spotlight open when switching queue photos', async () => {
-		const onSelectQueueImage = vi.fn();
-		const queueImages = [image, { id: 'img-2', src: DATA_IMAGE_PNG }];
+	it('keeps the spotlight open when switching queue slides', async () => {
+		const onSelectQueueItem = vi.fn();
+		const queueItems = [image, imageTierItem('img-2')];
 		const rows = [{ id: 'row-s', name: 'S', color: '#f00', images: [] }];
 
 		const { rerender, user } = renderWithProviders(
-			<Spotlight mode="assign" image={null} rows={rows} onRelease={vi.fn()} />,
+			<Spotlight mode="assign" item={null} rows={rows} onRelease={vi.fn()} />,
 		);
 
 		rerender(
 			<Spotlight
 				mode="assign"
-				image={image}
+				item={image}
 				rows={rows}
-				queueImages={queueImages}
-				totalImages={2}
-				spotlightImageId="img-1"
+				queueItems={queueItems}
+				totalSlides={2}
+				spotlightItemId="img-1"
 				queuePaused={false}
-				photoLabel="Photo 1 of 2"
+				slideLabel="Slide 1 of 2"
 				onRelease={vi.fn()}
 				onResumeQueue={vi.fn()}
-				onSelectQueueImage={onSelectQueueImage}
+				onSelectQueueItem={onSelectQueueItem}
 			/>,
 		);
 
-		const dialog = await screen.findByRole('dialog', { name: /Photo 1 of 2/i });
+		const dialog = await screen.findByRole('dialog', { name: /Slide 1 of 2/i });
 		await user.click(
-			within(dialog).getByRole('button', { name: 'Skip to photo 2 of 2' }),
+			within(dialog).getByRole('button', { name: /Skip to slide 2 of 2/i }),
 		);
-		expect(onSelectQueueImage).toHaveBeenCalledWith('img-2');
+		expect(onSelectQueueItem).toHaveBeenCalledWith('img-2');
 
 		rerender(
 			<Spotlight
 				mode="assign"
-				image={queueImages[1]}
+				item={queueItems[1]}
 				rows={rows}
-				queueImages={queueImages}
-				totalImages={2}
-				spotlightImageId="img-2"
+				queueItems={queueItems}
+				totalSlides={2}
+				spotlightItemId="img-2"
 				queuePaused={false}
-				photoLabel="Photo 2 of 2"
+				slideLabel="Slide 2 of 2"
 				onRelease={vi.fn()}
 				onResumeQueue={vi.fn()}
-				onSelectQueueImage={onSelectQueueImage}
+				onSelectQueueItem={onSelectQueueItem}
 			/>,
 		);
 
 		expect(
-			screen.getByRole('dialog', { name: /Photo 2 of 2/i }),
+			screen.getByRole('dialog', { name: /Slide 2 of 2/i }),
 		).toBeInTheDocument();
+	});
+
+	it('renders text slide content in assign mode', async () => {
+		const textItem = {
+			id: 'text-1',
+			kind: 'text' as const,
+			text: 'Rank this idea',
+		};
+
+		renderWithProviders(
+			<Spotlight
+				mode="assign"
+				item={textItem}
+				rows={[{ id: 'row-s', name: 'S', color: '#f00', images: [] }]}
+				onRelease={vi.fn()}
+			/>,
+		);
+
+		expect(await screen.findByText('Rank this idea')).toBeInTheDocument();
 	});
 });

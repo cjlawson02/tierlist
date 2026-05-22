@@ -1,10 +1,12 @@
 import { create } from 'zustand';
 import { PRESENTATION_TITLE, PRESENTATION_TIERS } from '../presentationConfig';
-import type { DropTarget, ImageItem, TierListState, TierRow } from '../types';
+import { MAX_TEXT_SLIDES_PER_BATCH } from '../constants';
+import { sanitizeTextContent } from '../sanitize';
+import { createImageItem, createTextItem } from '../tierItem';
+import type { DropTarget, TierItem, TierListState, TierRow } from '../types';
 import { TIER_COLORS } from '../types';
 import { createStoreId, resetStoreIds } from './storeIds';
 
-const createImage = (src: string): ImageItem => ({ id: createStoreId(), src });
 const createRow = (name: string, index: number): TierRow => ({
 	id: createStoreId(),
 	name,
@@ -48,7 +50,7 @@ const findLocation = (state: TierListState, imageId: string) => {
 
 const insertImage = (
 	state: TierListState,
-	image: ImageItem,
+	image: TierItem,
 	target: DropTarget & { index?: number },
 ) => {
 	if (target.type === 'row') {
@@ -72,6 +74,7 @@ const insertImage = (
 type SetupStore = TierListState & {
 	setTitle: (title: string) => void;
 	addImages: (srcs: string[]) => void;
+	addTextSlides: (texts: string[]) => void;
 	deleteImage: (imageId: string) => void;
 	moveImage: (imageId: string, target: DropTarget, targetIndex: number) => void;
 	resetPresentation: () => void;
@@ -85,7 +88,25 @@ export const useSetupStore = create<SetupStore>((set) => ({
 	},
 	addImages: (srcs) => {
 		set((state) => ({
-			untieredImages: [...state.untieredImages, ...srcs.map(createImage)],
+			untieredImages: [
+				...state.untieredImages,
+				...srcs.map((src) => createImageItem(src)),
+			],
+		}));
+	},
+	addTextSlides: (texts) => {
+		const sanitized = texts
+			.slice(0, MAX_TEXT_SLIDES_PER_BATCH)
+			.map((text) => sanitizeTextContent(text))
+			.filter((text): text is string => text != null);
+		if (sanitized.length === 0) {
+			return;
+		}
+		set((state) => ({
+			untieredImages: [
+				...state.untieredImages,
+				...sanitized.map((text) => createTextItem(text)),
+			],
 		}));
 	},
 	deleteImage: (imageId) => {
@@ -131,7 +152,7 @@ export const useSetupStore = create<SetupStore>((set) => ({
 		set({
 			title,
 			rows: PRESENTATION_TIERS.map((name, i) => createRow(name, i)),
-			untieredImages: srcs.map(createImage),
+			untieredImages: srcs.map((src) => createImageItem(src)),
 			vertical: false,
 		});
 	},

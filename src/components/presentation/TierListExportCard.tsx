@@ -1,4 +1,5 @@
 import { useMemo, type CSSProperties, type RefObject } from 'react';
+import TierItemDisplay from '../TierItemDisplay';
 import type { TierRow } from '../../types';
 
 interface TierListExportCardProps {
@@ -48,9 +49,9 @@ export default function TierListExportCard({
 							{row.name}
 						</span>
 						<span className="items">
-							{row.images.map((image) => (
-								<span className="item" key={image.id}>
-									<img src={image.src} alt="" className="tier-image" />
+							{row.images.map((item) => (
+								<span className="item" key={item.id}>
+									<TierItemDisplay item={item} variant="export" />
 								</span>
 							))}
 						</span>

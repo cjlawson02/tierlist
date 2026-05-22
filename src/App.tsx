@@ -70,7 +70,7 @@ export default function App() {
 	const startPresentation = () => {
 		const setupState = useSetupStore.getState();
 		if (setupState.untieredImages.length === 0) {
-			alert('Add at least one photo to the pool before starting presentation.');
+			alert('Add at least one slide to the pool before starting presentation.');
 			return;
 		}
 		void resumeAudioContext();
@@ -109,7 +109,7 @@ export default function App() {
 		if (
 			hasTieredImages &&
 			!confirm(
-				'Leave presentation? Photos will move back to the pool and tier assignments will be cleared.',
+				'Leave presentation? Slides will move back to the pool and tier assignments will be cleared.',
 			)
 		) {
 			return;
