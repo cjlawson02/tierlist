@@ -3,5 +3,5 @@
 	"compilerOptions": {
 		"noEmit": true
 	},
-	"include": ["src", "vite.config.ts", "__mocks__"]
+	"include": ["src", "worker", "vite.config.ts", "__mocks__"]
 }

@@ -1,11 +1,6 @@
 import { create } from 'zustand';
 import { PRESENTATION_TITLE, PRESENTATION_TIERS } from '../presentationConfig';
-import type {
-	DropTarget,
-	ImageItem,
-	TierListState,
-	TierRow,
-} from '../types';
+import type { DropTarget, ImageItem, TierListState, TierRow } from '../types';
 import { TIER_COLORS } from '../types';
 import { createStoreId, resetStoreIds } from './storeIds';
 
@@ -24,7 +19,6 @@ const createInitialState = (): TierListState => {
 		rows: PRESENTATION_TIERS.map((name, i) => createRow(name, i)),
 		untieredImages: [],
 		vertical: false,
-		unsavedChanges: false,
 	};
 };
 
@@ -80,26 +74,22 @@ type SetupStore = TierListState & {
 	addImages: (srcs: string[]) => void;
 	deleteImage: (imageId: string) => void;
 	moveImage: (imageId: string, target: DropTarget, targetIndex: number) => void;
-	resetPresentation: (options?: { markUnsaved?: boolean }) => void;
+	resetPresentation: () => void;
 	loadDemo: (title: string, srcs: string[]) => void;
 };
 
 export const useSetupStore = create<SetupStore>((set) => ({
 	...createInitialState(),
 	setTitle: (title) => {
-		set({ title, unsavedChanges: true });
+		set({ title });
 	},
 	addImages: (srcs) => {
 		set((state) => ({
 			untieredImages: [...state.untieredImages, ...srcs.map(createImage)],
-			unsavedChanges: true,
 		}));
 	},
 	deleteImage: (imageId) => {
-		set((state) => ({
-			...withoutImage(state, imageId),
-			unsavedChanges: true,
-		}));
+		set((state) => withoutImage(state, imageId));
 	},
 	moveImage: (imageId, target, targetIndex) => {
 		set((state) => {
@@ -117,17 +107,13 @@ export const useSetupStore = create<SetupStore>((set) => ({
 			) {
 				index -= 1;
 			}
-			return {
-				...insertImage({ ...state, ...withoutImage(state, imageId) }, image, {
-					...target,
-					index,
-				}),
-				unsavedChanges: true,
-			};
+			return insertImage({ ...state, ...withoutImage(state, imageId) }, image, {
+				...target,
+				index,
+			});
 		});
 	},
-	resetPresentation: (options) => {
-		const markUnsaved = options?.markUnsaved ?? true;
+	resetPresentation: () => {
 		set((state) => {
 			const tiered = state.rows.flatMap((row) => row.images);
 			const poolIds = new Set(state.untieredImages.map((img) => img.id));
@@ -137,7 +123,6 @@ export const useSetupStore = create<SetupStore>((set) => ({
 					...state.untieredImages,
 					...tiered.filter((img) => !poolIds.has(img.id)),
 				],
-				unsavedChanges: markUnsaved,
 			};
 		});
 	},
@@ -148,7 +133,6 @@ export const useSetupStore = create<SetupStore>((set) => ({
 			rows: PRESENTATION_TIERS.map((name, i) => createRow(name, i)),
 			untieredImages: srcs.map(createImage),
 			vertical: false,
-			unsavedChanges: true,
 		});
 	},
 }));

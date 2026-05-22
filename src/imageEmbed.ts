@@ -1,4 +1,4 @@
-import { formatBytes } from './bundle';
+import { formatBytes } from './formatBytes';
 import { MAX_IMAGE_BYTES } from './constants';
 import { resolveTpaasAssetUrl } from './integrations/tpaas';
 
@@ -11,13 +11,10 @@ export function resolveImageFetchUrl(url: string): string {
 	}
 	try {
 		const parsed = new URL(url, window.location.origin);
-		if (
-			import.meta.env.DEV &&
-			parsed.hostname === 'assets.tpaas.chrislawson.dev'
-		) {
+		if (parsed.hostname === 'assets.tpaas.chrislawson.dev') {
 			return resolveTpaasAssetUrl(url);
 		}
-		if (import.meta.env.DEV && parsed.hostname === 'cataas.com') {
+		if (parsed.hostname === 'cataas.com') {
 			return `/cataas-proxy${parsed.pathname}${parsed.search}`;
 		}
 	} catch {

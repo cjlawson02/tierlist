@@ -20,9 +20,18 @@ export default function PresentationQueue({
 	onSelectImage,
 }: PresentationQueueProps) {
 	const assignedCount = totalImages - images.length;
-	const currentNumber = Math.min(assignedCount + 1, totalImages);
+	const activeIndex = spotlightImageId
+		? images.findIndex((image) => image.id === spotlightImageId)
+		: -1;
+	const currentNumber =
+		activeIndex >= 0
+			? assignedCount + activeIndex + 1
+			: Math.min(assignedCount + 1, totalImages);
 	const progress =
 		totalImages > 0 ? Math.round((assignedCount / totalImages) * 100) : 100;
+	const upcomingImages = spotlightImageId
+		? images.filter((image) => image.id !== spotlightImageId)
+		: images;
 
 	return (
 		<section className="presentation-queue" aria-label="Photo queue">
@@ -60,28 +69,35 @@ export default function PresentationQueue({
 					/>
 				)}
 			</div>
-			{images.length > 0 && (
+			{upcomingImages.length > 0 && (
 				<div
 					className="presentation-queue__upcoming"
 					aria-label="Upcoming photos"
 				>
-					{images.map((image, index) => (
-						<button
-							key={image.id}
-							type="button"
-							className={`presentation-queue__thumb${spotlightImageId === image.id ? ' presentation-queue__thumb--active' : ''}${index === 0 && !spotlightImageId ? ' presentation-queue__thumb--next' : ''}`}
-							onClick={() => {
-								onSelectImage(image.id);
-							}}
-							aria-label={
-								index === 0
-									? `Show photo ${String(assignedCount + index + 1)} of ${String(totalImages)}`
-									: `Skip to photo ${String(assignedCount + index + 1)} of ${String(totalImages)}`
-							}
-						>
-							<img src={image.src} alt="" draggable={false} />
-						</button>
-					))}
+					{upcomingImages.map((image, index) => {
+						const photoNumber = spotlightImageId
+							? assignedCount + index + 2
+							: assignedCount + index + 1;
+
+						return (
+							<button
+								key={image.id}
+								type="button"
+								className={`presentation-queue__thumb${index === 0 ? ' presentation-queue__thumb--next' : ''}`}
+								onClick={(event) => {
+									event.stopPropagation();
+									onSelectImage(image.id);
+								}}
+								aria-label={
+									index === 0 && !spotlightImageId
+										? `Show photo ${String(photoNumber)} of ${String(totalImages)}`
+										: `Skip to photo ${String(photoNumber)} of ${String(totalImages)}`
+								}
+							>
+								<img src={image.src} alt="" draggable={false} />
+							</button>
+						);
+					})}
 				</div>
 			)}
 		</section>

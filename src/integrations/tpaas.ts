@@ -1,12 +1,5 @@
-import { INSPIRATION_DEMO } from './inspiration';
-
-export const TPAAS_BASE_URL = import.meta.env.DEV
-	? '/tpaas-proxy'
-	: 'https://tpaas.chrislawson.dev';
+export const TPAAS_BASE_URL = '/tpaas-proxy';
 export const TPAAS_CATALOG_URL = `${TPAAS_BASE_URL}/catalog.json`;
-export const TPAAS_DEMO_TITLE = 'Trolley Problem Tier List';
-
-export const TPAAS_DEMO = INSPIRATION_DEMO;
 
 const ASSET_URL_PATTERN =
 	/https:\/\/assets\.tpaas\.chrislawson\.dev\/approved\/[0-9a-f-]+\.(?:jpg|png)/gi;
@@ -62,7 +55,7 @@ async function fetchGalleryUrls(): Promise<string[]> {
 	return urls;
 }
 
-export async function fetchTpaasCatalog(): Promise<string[]> {
+async function fetchTpaasCatalog(): Promise<string[]> {
 	try {
 		return await fetchCatalogUrls();
 	} catch {
@@ -71,9 +64,6 @@ export async function fetchTpaasCatalog(): Promise<string[]> {
 }
 
 export function resolveTpaasAssetUrl(url: string): string {
-	if (!import.meta.env.DEV) {
-		return url;
-	}
 	return url.replace(
 		'https://assets.tpaas.chrislawson.dev',
 		'/tpaas-assets-proxy',

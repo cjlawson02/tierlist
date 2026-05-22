@@ -152,7 +152,6 @@ export function stopAllSounds(): void {
 		window.clearTimeout(id);
 	}
 	pendingTimers = [];
-	stopEliteSlideshowMusic();
 }
 
 export function playSpotlightOpen(): void {
@@ -215,40 +214,6 @@ export function playTierAssign(tierIndex: number, totalTiers: number): void {
 	scheduleTimeout(() => {
 		tone(98, 0.35, 'sawtooth', 0.04);
 	}, 520);
-}
-
-const SLIDESHOW_CHORDS = [
-	[523, 659, 784],
-	[587, 740, 880],
-	[659, 831, 988],
-	[698, 880, 1047],
-] as const;
-
-let slideshowMusicTimer: number | null = null;
-let slideshowMusicStep = 0;
-
-export function startEliteSlideshowMusic(): void {
-	stopEliteSlideshowMusic();
-	const playStep = () => {
-		const chord =
-			SLIDESHOW_CHORDS[slideshowMusicStep % SLIDESHOW_CHORDS.length];
-		chord.forEach((frequency, index) => {
-			scheduleTimeout(() => {
-				tone(frequency, 0.55, 'triangle', 0.045, 'flat');
-			}, index * 40);
-		});
-		slideshowMusicStep += 1;
-	};
-	playStep();
-	slideshowMusicTimer = window.setInterval(playStep, 720);
-}
-
-export function stopEliteSlideshowMusic(): void {
-	if (slideshowMusicTimer != null) {
-		window.clearInterval(slideshowMusicTimer);
-		slideshowMusicTimer = null;
-	}
-	slideshowMusicStep = 0;
 }
 
 export function playLanding(tierIndex: number, totalTiers: number): void {

@@ -13,10 +13,6 @@ type RenderWithProvidersOptions = RenderOptions & {
 	userEvent?: Options;
 };
 
-export function setupUser(options?: Options): UserEvent {
-	return userEvent.setup(options);
-}
-
 export function renderWithProviders(
 	ui: ReactElement,
 	options?: RenderWithProvidersOptions,

@@ -47,10 +47,9 @@ export default function Spotlight({
 }: SpotlightProps) {
 	const dialogRef = useRef<HTMLDivElement>(null);
 	const previousFocus = useRef<HTMLElement | null>(null);
-	const openedRef = useRef<string | null>(null);
 	const isPreview = mode === 'preview';
-	const [displayImage, setDisplayImage] = useState<ImageItem | null>(null);
-	const [isVisible, setIsVisible] = useState(false);
+	const [displayImage, setDisplayImage] = useState<ImageItem | null>(image);
+	const [isVisible, setIsVisible] = useState(image != null);
 	const [prevImage, setPrevImage] = useState(image);
 
 	if (image !== prevImage) {
@@ -93,12 +92,10 @@ export default function Spotlight({
 
 	useEffect(() => {
 		if (!image) {
-			openedRef.current = null;
 			return;
 		}
 		previousFocus.current = document.activeElement as HTMLElement | null;
 		requestAnimationFrame(() => dialogRef.current?.focus());
-		openedRef.current = image.id;
 	}, [image]);
 
 	useEffect(() => {
@@ -144,7 +141,7 @@ export default function Spotlight({
 		<AnimatePresence onExitComplete={handleExitComplete}>
 			{displayImage && isVisible && (
 				<motion.div
-					key={displayImage.id}
+					key={isPreview ? 'spotlight-preview' : 'spotlight-assign'}
 					className={`spotlight-backdrop${isPreview ? ' spotlight-backdrop--preview' : ' spotlight-backdrop--assign'} spotlight-backdrop--broadcast`}
 					layoutRoot
 					role="dialog"
@@ -182,31 +179,37 @@ export default function Spotlight({
 									}
 						}
 					>
-						{!isPreview && totalImages > 0 && onResumeQueue && onSelectQueueImage && (
-							<PresentationQueue
-								images={queueImages}
-								totalImages={totalImages}
-								spotlightImageId={spotlightImageId}
-								queuePaused={queuePaused}
-								onResume={onResumeQueue}
-								onSelectImage={onSelectQueueImage}
-							/>
-						)}
-						<div className="spotlight-image-wrap">
-							<motion.div
-								className="spotlight-layout-frame spotlight-layout-frame--hero"
-								initial={{ opacity: 0, scale: 0.94 }}
-								animate={{ opacity: 1, scale: 1 }}
-								exit={{ opacity: 0, scale: 0.96 }}
-								transition={{ type: 'spring', stiffness: 360, damping: 32 }}
-							>
-								<img
-									src={displayImage.src}
-									alt=""
-									className="spotlight-image"
-									draggable={false}
+						{!isPreview &&
+							totalImages > 0 &&
+							onResumeQueue &&
+							onSelectQueueImage && (
+								<PresentationQueue
+									images={queueImages}
+									totalImages={totalImages}
+									spotlightImageId={spotlightImageId}
+									queuePaused={queuePaused}
+									onResume={onResumeQueue}
+									onSelectImage={onSelectQueueImage}
 								/>
-							</motion.div>
+							)}
+						<div className="spotlight-image-wrap">
+							<AnimatePresence mode="popLayout">
+								<motion.div
+									key={displayImage.id}
+									className="spotlight-layout-frame spotlight-layout-frame--hero"
+									initial={{ opacity: 0, scale: 0.96 }}
+									animate={{ opacity: 1, scale: 1 }}
+									exit={{ opacity: 0, scale: 0.98 }}
+									transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+								>
+									<img
+										src={displayImage.src}
+										alt=""
+										className="spotlight-image"
+										draggable={false}
+									/>
+								</motion.div>
+							</AnimatePresence>
 						</div>
 						{!isPreview && (
 							<>

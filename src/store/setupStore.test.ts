@@ -13,19 +13,16 @@ describe('useSetupStore', () => {
 		expect(state.title).toBe(PRESENTATION_TITLE);
 		expect(state.rows).toHaveLength(PRESENTATION_TIERS.length);
 		expect(state.untieredImages).toEqual([]);
-		expect(state.unsavedChanges).toBe(false);
 	});
 
-	it('setTitle marks the list as unsaved', () => {
+	it('setTitle updates the title', () => {
 		getSetupStoreState().setTitle('Renamed');
 		expect(getSetupStoreState().title).toBe('Renamed');
-		expect(getSetupStoreState().unsavedChanges).toBe(true);
 	});
 
 	it('addImages appends to the pool', () => {
 		getSetupStoreState().addImages([DATA_IMAGE_PNG, DATA_IMAGE_PNG]);
 		expect(getSetupStoreState().untieredImages).toHaveLength(2);
-		expect(getSetupStoreState().unsavedChanges).toBe(true);
 	});
 
 	it('deleteImage removes images from rows and the pool', () => {
@@ -78,14 +75,5 @@ describe('useSetupStore', () => {
 			getSetupStoreState().rows.every((row) => row.images.length === 0),
 		).toBe(true);
 		expect(getSetupStoreState().untieredImages).toHaveLength(1);
-		expect(getSetupStoreState().unsavedChanges).toBe(true);
-	});
-
-	it('resetPresentation can preserve a clean saved state on exit', () => {
-		getSetupStoreState().addImages([DATA_IMAGE_PNG]);
-
-		getSetupStoreState().resetPresentation({ markUnsaved: false });
-
-		expect(getSetupStoreState().unsavedChanges).toBe(false);
 	});
 });

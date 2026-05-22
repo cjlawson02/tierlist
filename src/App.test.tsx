@@ -61,6 +61,5 @@ describe('App', () => {
 		expect(
 			await screen.findByRole('button', { name: 'Start presentation' }),
 		).toBeInTheDocument();
-		expect(getSetupStoreState().unsavedChanges).toBe(false);
 	});
 });

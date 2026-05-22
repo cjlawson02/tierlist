@@ -8,7 +8,6 @@ import {
 	useMemo,
 	useRef,
 	useState,
-	type CSSProperties,
 	type Dispatch,
 	type SetStateAction,
 } from 'react';
@@ -120,18 +119,16 @@ function FinaleSlideCard({
 			)}
 			<span
 				className="elite-slideshow__badge"
-				style={
-					{
-						backgroundColor: slide.tierColor,
-						color: 'var(--stage-bg)',
-						...(badgePosition
-							? {
-									left: `${String(badgePosition.left)}px`,
-									bottom: `${String(badgePosition.bottom)}px`,
-								}
-							: {}),
-					} as CSSProperties
-				}
+				style={{
+					backgroundColor: slide.tierColor,
+					color: 'var(--stage-bg)',
+					...(badgePosition
+						? {
+								left: `${String(badgePosition.left)}px`,
+								bottom: `${String(badgePosition.bottom)}px`,
+							}
+						: {}),
+				}}
 			>
 				{slide.tierName}
 			</span>
@@ -165,7 +162,7 @@ function FinaleCarouselEmblaLane({
 	onImageError,
 	active,
 }: FinaleCarouselLaneProps & { active: boolean }) {
-	const autoplay = useRef(
+	const [autoplayPlugin] = useState(() =>
 		Autoplay({
 			delay: AUTOPLAY_DELAY_MS,
 			stopOnInteraction: true,
@@ -178,7 +175,7 @@ function FinaleCarouselEmblaLane({
 			loop: true,
 			dragFree: true,
 		},
-		[autoplay.current],
+		[autoplayPlugin],
 	);
 
 	useEffect(() => {
@@ -186,7 +183,7 @@ function FinaleCarouselEmblaLane({
 			return;
 		}
 		if (!active) {
-			autoplay.current.stop();
+			autoplayPlugin.stop();
 			return;
 		}
 		emblaApi.reInit({
@@ -194,9 +191,9 @@ function FinaleCarouselEmblaLane({
 			loop: true,
 			dragFree: true,
 		});
-		autoplay.current.reset();
-		autoplay.current.play();
-	}, [active, emblaApi]);
+		autoplayPlugin.reset();
+		autoplayPlugin.play();
+	}, [active, autoplayPlugin, emblaApi]);
 
 	return (
 		<div

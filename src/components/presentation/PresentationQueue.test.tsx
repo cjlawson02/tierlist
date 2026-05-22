@@ -29,6 +29,46 @@ describe('PresentationQueue', () => {
 		expect(screen.getAllByRole('button', { name: /photo/i })).toHaveLength(2);
 	});
 
+	it('hides the current photo from upcoming thumbnails', () => {
+		renderWithProviders(
+			<PresentationQueue
+				images={images}
+				totalImages={5}
+				spotlightImageId="img-1"
+				queuePaused={false}
+				onResume={vi.fn()}
+				onSelectImage={vi.fn()}
+			/>,
+		);
+
+		expect(screen.getByText('Photo 4 of 5')).toBeInTheDocument();
+		expect(
+			screen.getByRole('button', { name: 'Skip to photo 5 of 5' }),
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole('button', { name: /photo 4 of 5/i }),
+		).not.toBeInTheDocument();
+	});
+
+	it('calls onSelectImage when an upcoming thumbnail is clicked', async () => {
+		const onSelectImage = vi.fn();
+		const { user } = renderWithProviders(
+			<PresentationQueue
+				images={images}
+				totalImages={5}
+				spotlightImageId="img-1"
+				queuePaused={false}
+				onResume={vi.fn()}
+				onSelectImage={onSelectImage}
+			/>,
+		);
+
+		await user.click(
+			screen.getByRole('button', { name: 'Skip to photo 5 of 5' }),
+		);
+		expect(onSelectImage).toHaveBeenCalledWith('img-2');
+	});
+
 	it('shows resume control when paused', () => {
 		renderWithProviders(
 			<PresentationQueue

@@ -202,7 +202,10 @@ body.ambient-bg::before {
 }
 
 .phase-presentation .tier-list .tier-label-readonly {
-	width: max(var(--tier-label-size, var(--tier-cell-size)), var(--tier-cell-size));
+	width: max(
+		var(--tier-label-size, var(--tier-cell-size)),
+		var(--tier-cell-size)
+	);
 	height: var(--tier-cell-size);
 	min-width: var(--tier-cell-size);
 	max-height: var(--tier-cell-size);
@@ -310,8 +313,8 @@ body.ambient-bg::before {
 
 .presentation-queue__thumb {
 	flex: 0 0 auto;
-	width: calc(var(--present-pool-height) - 1.4rem);
-	height: calc(var(--present-pool-height) - 1.4rem);
+	width: max(44px, calc(var(--present-pool-height) - 1rem));
+	height: max(44px, calc(var(--present-pool-height) - 1rem));
 	padding: 0;
 	border: 2px solid transparent;
 	border-radius: 8px;
@@ -337,10 +340,6 @@ body.ambient-bg::before {
 	opacity: 1;
 	border-color: rgba(107, 134, 255, 0.85);
 	box-shadow: 0 0 12px rgba(107, 134, 255, 0.35);
-}
-
-.presentation-queue__thumb--active {
-	opacity: 0.35;
 }
 
 .presentation-queue__thumb:hover {
@@ -1944,7 +1943,10 @@ body.broadcast-mode::after {
 
 .tierlist-export-card .tier-label-readonly {
 	flex-shrink: 0;
-	width: max(var(--tier-label-size, var(--tier-cell-size)), var(--tier-cell-size));
+	width: max(
+		var(--tier-label-size, var(--tier-cell-size)),
+		var(--tier-cell-size)
+	);
 	height: var(--tier-cell-size);
 	min-width: var(--tier-cell-size);
 	max-height: var(--tier-cell-size);

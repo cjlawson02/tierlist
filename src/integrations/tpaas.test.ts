@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { parseGalleryAssetUrls, pickTpaasImages, resolveTpaasAssetUrl } from './tpaas';
+import {
+	parseGalleryAssetUrls,
+	pickTpaasImages,
+	resolveTpaasAssetUrl,
+} from './tpaas';
 
 describe('tpaas integration', () => {
 	it('parses unique asset URLs from gallery HTML', () => {
@@ -38,7 +42,7 @@ describe('tpaas integration', () => {
 		expect(new Set(images).size).toBe(5);
 	});
 
-	it('rewrites asset URLs through the dev proxy', () => {
+	it('rewrites asset URLs through the proxy', () => {
 		expect(
 			resolveTpaasAssetUrl(
 				'https://assets.tpaas.chrislawson.dev/approved/aaaa-bbbb.jpg',

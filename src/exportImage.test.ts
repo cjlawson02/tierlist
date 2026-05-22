@@ -4,9 +4,7 @@ import { sanitizeExportFilename, saveTierListImage } from './exportImage';
 
 const mocks = vi.hoisted(() => ({
 	toBlob: vi.fn<typeof import('html-to-image').toBlob>(),
-	inlineRemoteImages: vi.fn<
-		typeof import('./imageEmbed').inlineRemoteImages
-	>(),
+	inlineRemoteImages: vi.fn<typeof import('./imageEmbed').inlineRemoteImages>(),
 	waitForImages: vi.fn<typeof import('./imageEmbed').waitForImages>(),
 }));
 
@@ -28,7 +26,9 @@ describe('exportImage', () => {
 	});
 
 	it('sanitizes export filenames', () => {
-		expect(sanitizeExportFilename('My Cool Tier List!')).toBe('My-Cool-Tier-List');
+		expect(sanitizeExportFilename('My Cool Tier List!')).toBe(
+			'My-Cool-Tier-List',
+		);
 		expect(sanitizeExportFilename('   ')).toBe('tier-list');
 	});
 
@@ -46,7 +46,7 @@ describe('exportImage', () => {
 		const snapshot = mocks.inlineRemoteImages.mock.calls[0]?.[0];
 		expect(snapshot).toBeInstanceOf(HTMLElement);
 		expect(snapshot).not.toBe(element);
-		expect((snapshot as HTMLElement).style.top).not.toBe('0px');
+		expect(snapshot.style.top).not.toBe('0px');
 		expect(mocks.waitForImages).toHaveBeenCalledWith(snapshot);
 		expect(mocks.toBlob).toHaveBeenCalledWith(
 			snapshot,

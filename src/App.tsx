@@ -12,7 +12,6 @@ import PresentationView from './views/PresentationView';
 import type { AppPhase } from './types';
 
 export default function App() {
-	const unsavedChanges = useSetupStore((state) => state.unsavedChanges);
 	const rows = useSetupStore((state) => state.rows);
 	const resetPresentation = useSetupStore((state) => state.resetPresentation);
 	const loadDemo = useSetupStore((state) => state.loadDemo);
@@ -20,6 +19,7 @@ export default function App() {
 	const [appPhase, setAppPhase] = useState<AppPhase>('setup');
 	const [curtain, setCurtain] = useState(false);
 	const [introActive, setIntroActive] = useState(false);
+	const hasTieredImages = rows.some((row) => row.images.length > 0);
 
 	useEffect(() => {
 		document.body.classList.toggle('ambient-bg', EFFECTS.ambientBackground);
@@ -39,17 +39,20 @@ export default function App() {
 	}, [appPhase]);
 
 	useEffect(() => {
-		if (!unsavedChanges) {
+		if (appPhase !== 'presentation' || !hasTieredImages) {
 			return;
 		}
 		const onBeforeUnload = (event: BeforeUnloadEvent) => {
 			event.preventDefault();
+			// Required by Chrome/Safari to show the native leave dialog.
+			// eslint-disable-next-line @typescript-eslint/no-deprecated -- still the cross-browser way to trigger the prompt
+			event.returnValue = '';
 		};
 		window.addEventListener('beforeunload', onBeforeUnload);
 		return () => {
 			window.removeEventListener('beforeunload', onBeforeUnload);
 		};
-	}, [unsavedChanges]);
+	}, [appPhase, hasTieredImages]);
 
 	useEffect(() => {
 		if (!introActive) {
@@ -111,7 +114,7 @@ export default function App() {
 		) {
 			return;
 		}
-		resetPresentation({ markUnsaved: false });
+		resetPresentation();
 		stopAllSounds();
 		setIntroActive(false);
 		setAppPhase('setup');

@@ -1,5 +1,5 @@
 import { MAX_IMAGE_BYTES } from './constants';
-import { formatBytes } from './bundle';
+import { formatBytes } from './formatBytes';
 
 export const readFileAsDataUrl = (file: Blob) =>
 	new Promise<string>((resolve, reject) => {

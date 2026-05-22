@@ -102,7 +102,9 @@ export default function PresentationView({
 			setToast('Downloaded tier list image');
 		} catch (err) {
 			setToast(
-				err instanceof Error ? err.message : 'Failed to download tier list image',
+				err instanceof Error
+					? err.message
+					: 'Failed to download tier list image',
 			);
 		} finally {
 			setSaveImageBusy(false);
@@ -117,9 +119,8 @@ export default function PresentationView({
 
 		const styles = getComputedStyle(tierList);
 		const cap =
-			Number.parseFloat(
-				styles.getPropertyValue('--tier-cell-size-present'),
-			) || 240;
+			Number.parseFloat(styles.getPropertyValue('--tier-cell-size-present')) ||
+			240;
 		const cellSize = Math.min(
 			cap,
 			Math.max(1, Math.floor(tierList.clientHeight / rows.length)),
@@ -370,9 +371,17 @@ export default function PresentationView({
 	}, [queuePaused, resumeQueue, spotlightImageId, untieredImages.length]);
 
 	const assignedCount = totalImages - untieredImages.length;
+	const spotlightQueueIndex =
+		spotlightImageId != null
+			? untieredImages.findIndex((image) => image.id === spotlightImageId)
+			: -1;
 	const spotlightPhotoLabel =
 		spotlightImageId && totalImages > 0
-			? `Photo ${String(assignedCount + 1)} of ${String(totalImages)}`
+			? `Photo ${String(
+					spotlightQueueIndex >= 0
+						? assignedCount + spotlightQueueIndex + 1
+						: assignedCount + 1,
+				)} of ${String(totalImages)}`
 			: null;
 
 	return (
@@ -473,7 +482,6 @@ export default function PresentationView({
 						/>
 					))}
 				</div>
-
 			</main>
 
 			<BroadcastLowerThird

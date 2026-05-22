@@ -8,9 +8,9 @@ describe('cataas integration', () => {
 				id: 'abc123',
 				url: 'https://cataas.com/cat/abc123?position=center',
 			}),
-		).toBe('https://cataas.com/cat/abc123?position=center');
+		).toBe('/cataas-proxy/cat/abc123?position=center');
 		expect(parseCataasCatUrl({ id: 'abc123' })).toBe(
-			'https://cataas.com/cat/abc123',
+			'/cataas-proxy/cat/abc123',
 		);
 	});
 
@@ -33,8 +33,8 @@ describe('cataas integration', () => {
 		const images = await pickCataasImages(3);
 		expect(images).toHaveLength(3);
 		expect(new Set(images).size).toBe(3);
-		expect(
-			images.every((url) => url.startsWith('https://cataas.com/cat/')),
-		).toBe(true);
+		expect(images.every((url) => url.startsWith('/cataas-proxy/cat/'))).toBe(
+			true,
+		);
 	});
 });

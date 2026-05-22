@@ -8,18 +8,6 @@ export function mockAlert() {
 	return vi.spyOn(window, 'alert').mockImplementation(() => undefined);
 }
 
-export function mockPrompt(value: string | null) {
-	return vi.spyOn(window, 'prompt').mockReturnValue(value);
-}
-
-export function createJsonFile(
-	content: unknown,
-	name = 'test.tierlist.json',
-): File {
-	const json = JSON.stringify(content);
-	return new File([json], name, { type: 'application/json' });
-}
-
 export function createBlobFile(
 	content: string | BlobPart[],
 	name: string,
@@ -82,15 +70,6 @@ export function mockReducedMotion(matches = true) {
 		removeEventListener: vi.fn(),
 		dispatchEvent: vi.fn(),
 	}));
-}
-
-export function mockResizeObserver() {
-	class MockResizeObserver {
-		observe = vi.fn();
-		unobserve = vi.fn();
-		disconnect = vi.fn();
-	}
-	vi.stubGlobal('ResizeObserver', MockResizeObserver);
 }
 
 export function mockAudioContext(state: AudioContextState = 'running') {

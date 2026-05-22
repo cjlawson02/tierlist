@@ -1,5 +1,4 @@
-export const CATAAS_BASE_URL = 'https://cataas.com';
-export const CATAAS_DEMO_TITLE = 'Cat Tier List';
+export const CATAAS_BASE_URL = '/cataas-proxy';
 
 interface CataasCatResponse {
 	id?: string;
@@ -8,7 +7,7 @@ interface CataasCatResponse {
 
 export function parseCataasCatUrl(data: CataasCatResponse): string | null {
 	if (typeof data.url === 'string' && data.url.length > 0) {
-		return data.url;
+		return data.url.replace('https://cataas.com', CATAAS_BASE_URL);
 	}
 	if (typeof data.id === 'string' && data.id.length > 0) {
 		return `${CATAAS_BASE_URL}/cat/${data.id}`;

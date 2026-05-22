@@ -89,5 +89,21 @@ export default tseslint.config(
 			],
 		},
 	},
+	{
+		files: ['worker/**/*.ts'],
+		languageOptions: {
+			globals: {
+				...globals.worker,
+			},
+		},
+		rules: {
+			'react-hooks/rules-of-hooks': 'off',
+			'react-hooks/set-state-in-effect': 'off',
+			'react-hooks/refs': 'off',
+			'@typescript-eslint/no-unsafe-return': 'off',
+			'@typescript-eslint/no-unsafe-call': 'off',
+			'@typescript-eslint/no-unsafe-member-access': 'off',
+		},
+	},
 	eslintConfigPrettier,
 );

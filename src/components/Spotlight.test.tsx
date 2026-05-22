@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import Spotlight from './Spotlight';
-import { renderWithProviders, screen } from '../test/render';
+import { renderWithProviders, screen, within } from '../test/render';
 import { DATA_IMAGE_PNG } from '../test/fixtures';
 
 const image = { id: 'img-1', src: DATA_IMAGE_PNG };
@@ -97,5 +97,57 @@ describe('Spotlight', () => {
 
 		await user.click(await screen.findByRole('button', { name: 'S' }));
 		expect(onAssignTier).toHaveBeenCalledWith('row-s', 'S', '#f00', 0);
+	});
+
+	it('keeps the spotlight open when switching queue photos', async () => {
+		const onSelectQueueImage = vi.fn();
+		const queueImages = [image, { id: 'img-2', src: DATA_IMAGE_PNG }];
+		const rows = [{ id: 'row-s', name: 'S', color: '#f00', images: [] }];
+
+		const { rerender, user } = renderWithProviders(
+			<Spotlight mode="assign" image={null} rows={rows} onRelease={vi.fn()} />,
+		);
+
+		rerender(
+			<Spotlight
+				mode="assign"
+				image={image}
+				rows={rows}
+				queueImages={queueImages}
+				totalImages={2}
+				spotlightImageId="img-1"
+				queuePaused={false}
+				photoLabel="Photo 1 of 2"
+				onRelease={vi.fn()}
+				onResumeQueue={vi.fn()}
+				onSelectQueueImage={onSelectQueueImage}
+			/>,
+		);
+
+		const dialog = await screen.findByRole('dialog', { name: /Photo 1 of 2/i });
+		await user.click(
+			within(dialog).getByRole('button', { name: 'Skip to photo 2 of 2' }),
+		);
+		expect(onSelectQueueImage).toHaveBeenCalledWith('img-2');
+
+		rerender(
+			<Spotlight
+				mode="assign"
+				image={queueImages[1]}
+				rows={rows}
+				queueImages={queueImages}
+				totalImages={2}
+				spotlightImageId="img-2"
+				queuePaused={false}
+				photoLabel="Photo 2 of 2"
+				onRelease={vi.fn()}
+				onResumeQueue={vi.fn()}
+				onSelectQueueImage={onSelectQueueImage}
+			/>,
+		);
+
+		expect(
+			screen.getByRole('dialog', { name: /Photo 2 of 2/i }),
+		).toBeInTheDocument();
 	});
 });

@@ -70,7 +70,6 @@ export function emptyTierListState(
 		],
 		untieredImages: [{ id: 'img-1', src: DATA_IMAGE_PNG }],
 		vertical: false,
-		unsavedChanges: false,
 		...overrides,
 	};
 }

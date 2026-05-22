@@ -7,8 +7,6 @@ import { QUEUE } from '../presentationConfig';
 
 vi.mock('../effects/celebrate', () => ({
 	celebrateTier: vi.fn().mockResolvedValue(undefined),
-	celebrateSlideshowSlide: vi.fn().mockResolvedValue(undefined),
-	stopSlideshowConfetti: vi.fn(),
 }));
 
 const saveTierListImage = vi.hoisted(() =>
@@ -61,6 +59,24 @@ describe('PresentationView', () => {
 
 		expect(
 			await screen.findByRole('dialog', { name: /Photo 2 of 2/i }),
+		).toBeInTheDocument();
+	});
+
+	it('skips ahead when an upcoming queue thumbnail is clicked', async () => {
+		getSetupStoreState().addImages([DATA_IMAGE_PNG, DATA_IMAGE_PNG]);
+
+		const { user } = renderWithProviders(
+			<PresentationView onExitSetup={vi.fn()} />,
+			{ userEvent: { advanceTimers: vi.advanceTimersByTime } },
+		);
+
+		const dialog = await screen.findByRole('dialog', { name: /Photo 1 of 3/i });
+		await user.click(
+			within(dialog).getByRole('button', { name: 'Skip to photo 3 of 3' }),
+		);
+
+		expect(
+			await screen.findByRole('dialog', { name: /Photo 3 of 3/i }),
 		).toBeInTheDocument();
 	});
 
@@ -132,11 +148,15 @@ describe('PresentationView', () => {
 			{ userEvent: { advanceTimers: vi.advanceTimersByTime } },
 		);
 
-		const spotlight = await screen.findByRole('dialog', { name: /Photo 1 of 1/i });
+		const spotlight = await screen.findByRole('dialog', {
+			name: /Photo 1 of 1/i,
+		});
 		expect(
 			screen.queryByRole('button', { name: 'Back to photos' }),
 		).not.toBeInTheDocument();
-		expect(screen.getByRole('button', { name: 'Go to tier list' })).toBeInTheDocument();
+		expect(
+			screen.getByRole('button', { name: 'Go to tier list' }),
+		).toBeInTheDocument();
 
 		await user.click(spotlight);
 		await user.click(screen.getByRole('button', { name: 'Back to photos' }));

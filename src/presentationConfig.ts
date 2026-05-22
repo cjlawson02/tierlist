@@ -14,9 +14,7 @@ export type TierEffectKind =
 	| 'rain';
 
 export const EFFECTS = {
-	celebrateTiers: true,
 	ambientBackground: true,
-	sound: true,
 	introSequence: true,
 	broadcastMode: true,
 } as const;
@@ -44,7 +42,7 @@ const TONE_LADDER: DisappointmentTone[] = [
 	'positive',
 	'neutral',
 	'meh',
-	'sad',
+	'dull',
 	'devastating',
 ];
 
@@ -117,24 +115,6 @@ const LOWER_THIRD_LABELS: Record<DisappointmentTone, readonly string[]> = {
 	],
 };
 
-const ELITE_FINALE_LABELS: Record<'celebrate' | 'positive', readonly string[]> =
-	{
-		celebrate: [
-			'The crown jewels',
-			'Hall of fame',
-			'Peak tier',
-			'Certified elite',
-			'The GOAT tier',
-		],
-		positive: [
-			'Honorable mentions',
-			'Strong contenders',
-			'The A-list',
-			'W tier energy',
-			'Almost flawless',
-		],
-	};
-
 /** 0 = top tier (best), 1 = bottom tier (worst) */
 export function getTierRank(tierIndex: number, totalTiers: number): number {
 	if (totalTiers <= 1) {
@@ -177,24 +157,6 @@ export function shouldFireConfetti(
 ): boolean {
 	const tone = getDisappointmentTone(tierIndex, totalTiers);
 	return tone === 'celebrate' || tone === 'positive' || tone === 'neutral';
-}
-
-/** S and A tier equivalents (top two tones) */
-export function isEliteTier(tierIndex: number, totalTiers: number): boolean {
-	const tone = getDisappointmentTone(tierIndex, totalTiers);
-	return tone === 'celebrate' || tone === 'positive';
-}
-
-export function getEliteFinaleLabel(
-	tierIndex: number,
-	totalTiers: number,
-): string {
-	const tone = getDisappointmentTone(tierIndex, totalTiers);
-	if (tone !== 'celebrate' && tone !== 'positive') {
-		return 'Best of the best';
-	}
-	const options = ELITE_FINALE_LABELS[tone];
-	return options[Math.floor(Math.random() * options.length)];
 }
 
 export function getLowerThirdLabel(tone: DisappointmentTone): string {

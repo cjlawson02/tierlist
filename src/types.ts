@@ -17,7 +17,6 @@ export interface TierListState {
 	rows: TierRow[];
 	untieredImages: ImageItem[];
 	vertical: boolean;
-	unsavedChanges: boolean;
 }
 
 export interface SerializedTierList {

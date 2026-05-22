@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-	celebrateSlideshowSlide,
-	celebrateTier,
-	stopSlideshowConfetti,
-} from './celebrate';
+import { celebrateTier } from './celebrate';
 import { mockReducedMotion } from '../test/helpers';
 
 const confettiMock = vi.hoisted(() => vi.fn());
@@ -53,17 +49,5 @@ describe('celebrate', () => {
 		mockReducedMotion(true);
 		await celebrateTier('#ff0000', 0, 6);
 		expect(confettiMock).not.toHaveBeenCalled();
-	});
-
-	it('celebrateSlideshowSlide runs for elite tiers', async () => {
-		await celebrateSlideshowSlide('#ff0000', 0, 6);
-		expect(confettiMock).toHaveBeenCalled();
-	});
-
-	it('stopSlideshowConfetti is safe to call repeatedly', () => {
-		expect(() => {
-			stopSlideshowConfetti();
-			stopSlideshowConfetti();
-		}).not.toThrow();
 	});
 });

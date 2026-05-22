@@ -10,7 +10,7 @@ describe('imageEmbed', () => {
 		vi.unstubAllGlobals();
 	});
 
-	it('rewrites tpaas asset URLs through the dev proxy', () => {
+	it('rewrites tpaas asset URLs through the proxy', () => {
 		expect(
 			resolveImageFetchUrl(
 				'https://assets.tpaas.chrislawson.dev/approved/aaaa-bbbb.jpg',
@@ -24,8 +24,7 @@ describe('imageEmbed', () => {
 			vi.fn(() =>
 				Promise.resolve({
 					ok: true,
-					blob: () =>
-						Promise.resolve(new Blob(['img'], { type: 'image/png' })),
+					blob: () => Promise.resolve(new Blob(['img'], { type: 'image/png' })),
 				}),
 			),
 		);
@@ -38,10 +37,12 @@ describe('imageEmbed', () => {
 		vi.stubGlobal(
 			'FileReader',
 			class {
-				onload: ((this: FileReader, ev: ProgressEvent<FileReader>) => void) | null =
-					null;
-				onerror: ((this: FileReader, ev: ProgressEvent<FileReader>) => void) | null =
-					null;
+				onload:
+					| ((this: FileReader, ev: ProgressEvent<FileReader>) => void)
+					| null = null;
+				onerror:
+					| ((this: FileReader, ev: ProgressEvent<FileReader>) => void)
+					| null = null;
 				readAsDataURL = readAsDataURL;
 			},
 		);

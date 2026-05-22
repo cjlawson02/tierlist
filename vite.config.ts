@@ -4,7 +4,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
 	plugins: [react()],
 	base: './',
-		server: {
+	server: {
 		proxy: {
 			'/tpaas-proxy': {
 				target: 'https://tpaas.chrislawson.dev',

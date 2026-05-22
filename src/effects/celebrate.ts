@@ -185,37 +185,6 @@ async function fireSparkle(color: string): Promise<void> {
 	});
 }
 
-let slideshowConfettiTimer: number | null = null;
-
-export function stopSlideshowConfetti(): void {
-	if (slideshowConfettiTimer != null) {
-		window.clearInterval(slideshowConfettiTimer);
-		slideshowConfettiTimer = null;
-	}
-}
-
-export async function celebrateSlideshowSlide(
-	color: string,
-	tierIndex: number,
-	totalTiers: number,
-): Promise<void> {
-	if (prefersReducedMotion()) {
-		return;
-	}
-
-	stopSlideshowConfetti();
-	slideshowConfettiTimer = window.setInterval(() => {
-		void fireConfetti(color, 'subtle');
-	}, 1100);
-
-	const tone = getDisappointmentTone(tierIndex, totalTiers);
-	if (tone === 'celebrate') {
-		await fireConfetti(color, 'hero');
-		return;
-	}
-	await fireSparkle(color);
-}
-
 export async function celebrateTier(
 	color: string,
 	tierIndex: number,
@@ -223,9 +192,6 @@ export async function celebrateTier(
 ): Promise<void> {
 	if (prefersReducedMotion()) {
 		return;
-	}
-	if (!shouldFireConfetti(tierIndex, totalTiers)) {
-		await clearConfetti();
 	}
 	const effect = getTierEffectForRank(tierIndex, totalTiers);
 	const rank = getTierRank(tierIndex, totalTiers);

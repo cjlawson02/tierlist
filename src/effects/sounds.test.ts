@@ -7,9 +7,7 @@ import {
 	playTierAssign,
 	resumeAudioContext,
 	setSoundMuted,
-	startEliteSlideshowMusic,
 	stopAllSounds,
-	stopEliteSlideshowMusic,
 } from './sounds';
 import { mockAudioContext } from '../test/helpers';
 
@@ -54,15 +52,6 @@ describe('sounds', () => {
 			playLanding(3, 6);
 			playLanding(5, 6);
 		}).not.toThrow();
-	});
-
-	it('elite slideshow music can start and stop cleanly', () => {
-		vi.useFakeTimers();
-		expect(() => {
-			startEliteSlideshowMusic();
-			stopEliteSlideshowMusic();
-		}).not.toThrow();
-		vi.useRealTimers();
 	});
 
 	it('stopAllSounds clears pending timers', () => {

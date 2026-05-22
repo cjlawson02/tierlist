@@ -7,3 +7,4 @@ coverage/
 .wrangler/
 .dev.vars*
 .playwright-mcp/
+.DS_Store

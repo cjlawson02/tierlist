@@ -79,7 +79,9 @@ describe('FinaleCarousel', () => {
 		);
 
 		await screen.findByRole('dialog', { name: /Finale carousel/i });
-		expect(document.querySelector('.elite-slideshow__lane--static')).toBeTruthy();
+		expect(
+			document.querySelector('.elite-slideshow__lane--static'),
+		).toBeTruthy();
 		expect(document.querySelector('.elite-slideshow__viewport')).toBeNull();
 	});
 
